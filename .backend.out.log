@@ -1,0 +1,27 @@
+
+> swipe4change-api@1.0.0 dev
+> node --watch server.js
+
+◇ injected env (7) from ..\.env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+Swipe4Change API running on port 3001
+Restarting 'server.js'
+◇ injected env (7) from ..\.env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+Failed running 'server.js'. Waiting for file changes before restarting...
+Restarting 'server.js'
+◇ injected env (7) from ..\.env // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+Swipe4Change API running on port 3001
+Restarting 'server.js'
+◇ injected env (7) from ..\.env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+Failed running 'server.js'. Waiting for file changes before restarting...
+Restarting 'server.js'
+◇ injected env (10) from ..\.env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+Failed running 'server.js'. Waiting for file changes before restarting...
+Restarting 'server.js'
+◇ injected env (10) from ..\.env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+Swipe4Change API running on port 3001

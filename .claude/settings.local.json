@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm list *)",
+      "Bash(node -e \"require\\('pptxgenjs'\\); console.log\\('ok'\\)\")",
+      "Bash(npm install *)",
+      "Bash(npm root *)",
+      "Bash(node -e \"const m = require\\(require\\('path'\\).join\\(require\\('child_process'\\).execSync\\('npm root -g'\\).toString\\(\\).trim\\(\\), 'pptxgenjs'\\)\\); console.log\\('ok'\\)\")",
+      "Bash(node make_pptx.js)",
+      "Bash(node -e \"require\\(require\\('path'\\).join\\(require\\('child_process'\\).execSync\\('npm root -g'\\).toString\\(\\).trim\\(\\), 'docx'\\)\\); console.log\\('ok'\\)\")",
+      "Bash(node make_script_doc.js)"
+    ]
+  }
+}

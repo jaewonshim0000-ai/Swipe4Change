@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: swipe4change-api
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: google/gemini-2.5-flash
+      - key: OPENROUTER_SITE_URL
+        sync: false
+      - key: OPENROUTER_APP_NAME
+        value: Swipe4Change
+      - key: REPORT_EMAIL_TO
+        value: jaewonshim0000@gmail.com
+      - key: REPORT_EMAIL_FROM
+        value: Swipe4Change <onboarding@resend.dev>
+      - key: RESEND_API_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        value: "*"
