@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { View, Animated, PanResponder, Dimensions, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { COLORS } from '../theme';
@@ -14,159 +14,121 @@ export default function SwipeDeck({
   onSwipeRight,
   onSwipeLeft,
   onTap,
-<<<<<<< HEAD
   onReport,
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-  onReset,
 }) {
   const position = useRef(new Animated.ValueXY()).current;
-  const [dragX, setDragX] = useState(0);
+  const active = data[index];
 
-  useEffect(() => {
-    const id = position.x.addListener(({ value }) => setDragX(value));
-    return () => position.x.removeListener(id);
-  }, [position.x]);
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
-        onPanResponderMove: Animated.event(
-          [null, { dx: position.x, dy: position.y }],
-          { useNativeDriver: false }
-        ),
-        onPanResponderRelease: (_, g) => {
-          if (g.dx > SWIPE_THRESHOLD) {
-            forceSwipe('right');
-          } else if (g.dx < -SWIPE_THRESHOLD) {
-            forceSwipe('left');
-          } else {
-            resetPosition();
-          }
-        },
-      }),
-    [position, index, data]
-  );
-
-  const forceSwipe = (direction) => {
-    const x = direction === 'right' ? SCREEN_W * 1.5 : -SCREEN_W * 1.5;
-    Haptics.impactAsync(
-      direction === 'right'
-        ? Haptics.ImpactFeedbackStyle.Medium
-        : Haptics.ImpactFeedbackStyle.Light
-    ).catch(() => {});
-    Animated.timing(position, {
-      toValue: { x, y: 0 },
-      duration: SWIPE_OUT_DURATION,
-      useNativeDriver: false,
-    }).start(() => onSwipeComplete(direction));
-  };
-
-  const onSwipeComplete = (direction) => {
-    const item = data[index];
-    if (!item) return;
-    position.setValue({ x: 0, y: 0 });
-    if (direction === 'right') onSwipeRight(item);
-    else onSwipeLeft(item);
-  };
+  const rotate = position.x.interpolate({
+    inputRange: [-SCREEN_W / 2, 0, SCREEN_W / 2],
+    outputRange: ['-10deg', '0deg', '10deg'],
+    extrapolate: 'clamp',
+  });
 
   const resetPosition = () => {
     Animated.spring(position, {
       toValue: { x: 0, y: 0 },
-      friction: 6,
       useNativeDriver: false,
+      friction: 5,
     }).start();
   };
 
-  // Expose programmatic swipe for action buttons
-  SwipeDeck.triggerSwipe = forceSwipe;
-
-  const getCardStyle = () => {
-    const rotate = position.x.interpolate({
-      inputRange: [-SCREEN_W * 1.5, 0, SCREEN_W * 1.5],
-      outputRange: ['-30deg', '0deg', '30deg'],
+  const completeSwipe = (direction) => {
+    const toX = direction === 'right' ? SCREEN_W * 1.4 : -SCREEN_W * 1.4;
+    Animated.timing(position, {
+      toValue: { x: toX, y: 0 },
+      duration: SWIPE_OUT_DURATION,
+      useNativeDriver: false,
+    }).start(() => {
+      position.setValue({ x: 0, y: 0 });
+      if (!active) return;
+      if (direction === 'right') onSwipeRight?.(active);
+      else onSwipeLeft?.(active);
     });
-    return {
-      ...position.getLayout(),
-      transform: [{ rotate }],
-    };
   };
 
-  if (index >= data.length) {
+  const panResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 5 || Math.abs(gesture.dy) > 5,
+    onPanResponderMove: (_, gesture) => {
+      position.setValue({ x: gesture.dx, y: gesture.dy });
+    },
+    onPanResponderRelease: (_, gesture) => {
+      if (gesture.dx > SWIPE_THRESHOLD) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        completeSwipe('right');
+      } else if (gesture.dx < -SWIPE_THRESHOLD) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        completeSwipe('left');
+      } else {
+        resetPosition();
+      }
+    },
+  }), [active, onSwipeLeft, onSwipeRight]);
+
+  SwipeDeck.triggerSwipe = completeSwipe;
+
+  if (!active) {
     return (
       <View style={styles.empty}>
         <View style={styles.emptyIcon}>
-          <Text style={styles.emptyIconEmoji}>✨</Text>
+          <Text style={styles.emptyIconEmoji}>✓</Text>
         </View>
         <Text style={styles.emptyTitle}>You're all caught up</Text>
-        <Text style={styles.emptySub}>
-          You've seen every petition in your feed. New ones arrive daily based on your interests.
-        </Text>
-        <TouchableOpacity style={styles.resetBtn} onPress={onReset} activeOpacity={0.8}>
-          <Text style={styles.resetBtnText}>Restart deck</Text>
-        </TouchableOpacity>
+        <Text style={styles.emptySub}>Check Discover for more petitions or update your interests.</Text>
       </View>
     );
   }
 
-  const renderCards = () => {
-    return data
-      .map((item, i) => {
-        if (i < index) return null;
-        if (i > index + 2) return null;
-
-        // Top card - draggable
-        if (i === index) {
-          return (
-            <Animated.View
-              key={item.id}
-              style={[styles.cardContainer, getCardStyle()]}
-              {...panResponder.panHandlers}
-            >
-              <TouchableOpacity
-                activeOpacity={1}
-                onPress={() => onTap(item)}
-                style={{ flex: 1 }}
-                // Only fire tap if not currently dragging
-                delayPressIn={120}
-              >
-<<<<<<< HEAD
-                <PetitionCard petition={item} dragX={dragX} onReport={onReport} />
-=======
-                <PetitionCard petition={item} dragX={dragX} />
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-              </TouchableOpacity>
-            </Animated.View>
-          );
-        }
-
-        // Background stack cards
-        const depth = i - index;
+  const renderCards = () => data
+    .slice(index, index + 3)
+    .map((item, i) => {
+      if (i === 0) {
         return (
-          <View
+          <Animated.View
             key={item.id}
             style={[
               styles.cardContainer,
               {
+                zIndex: 10,
                 transform: [
-                  { translateY: -depth * 8 },
-                  { scale: 1 - depth * 0.04 },
+                  { translateX: position.x },
+                  { translateY: position.y },
+                  { rotate },
                 ],
-                opacity: 0.5 - depth * 0.15,
-                zIndex: -depth,
               },
             ]}
-            pointerEvents="none"
+            {...panResponder.panHandlers}
           >
-            <PetitionCard petition={item} dragX={0} />
-          </View>
+            <TouchableOpacity activeOpacity={1} style={{ flex: 1 }} onPress={() => onTap?.(item)}>
+              <PetitionCard petition={item} dragX={position.x.__getValue?.() || 0} onReport={onReport} />
+            </TouchableOpacity>
+          </Animated.View>
         );
-      })
-      .filter(Boolean)
-      .reverse();
-  };
+      }
+
+      const depth = i;
+      return (
+        <View
+          key={item.id}
+          style={[
+            styles.cardContainer,
+            {
+              transform: [
+                { translateY: depth * 8 },
+                { scale: 1 - depth * 0.04 },
+              ],
+              opacity: 0.5 - depth * 0.12,
+              zIndex: -depth,
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <PetitionCard petition={item} dragX={0} />
+        </View>
+      );
+    })
+    .reverse();
 
   return <View style={styles.deck}>{renderCards()}</View>;
 }
@@ -187,14 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
   },
-  emptyIconEmoji: { fontSize: 32 },
+  emptyIconEmoji: { fontSize: 32, color: COLORS.tertiary },
   emptyTitle: { color: 'white', fontSize: 24, fontWeight: '900', marginBottom: 8, textAlign: 'center' },
   emptySub: { color: 'rgba(255,255,255,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 20 },
-  resetBtn: {
-    paddingHorizontal: 28, paddingVertical: 14,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 999,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-  },
-  resetBtnText: { color: 'white', fontSize: 14, fontWeight: '700' },
 });

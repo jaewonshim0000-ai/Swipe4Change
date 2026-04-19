@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-import React, { useMemo, useState } from 'react';
-=======
-import React, { useState } from 'react';
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-import {
+import React, { useMemo, useState } from 'react';import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
@@ -12,22 +7,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { COLORS, CATEGORY_STYLE } from '../theme';
-<<<<<<< HEAD
 import { PETITION_CATEGORIES, PETITION_TAG_OPTIONS, URGENCY_LEVELS } from '../data/petitions';
 import { useApp } from '../contexts/AppContext';
-import { apiRequest, API_BASE_URL } from '../config/api';
-=======
-import { PETITION_CATEGORIES, URGENCY_LEVELS } from '../data/petitions';
-import { useApp } from '../contexts/AppContext';
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-import { fmtNumber } from '../utils/helpers';
+import { apiRequest, API_BASE_URL } from '../config/api';import { fmtNumber } from '../utils/helpers';
 
 const STEPS = ['Category', 'Name & Location', 'Situation', 'What We Ask', 'Urgency & Recipient', 'Goal', 'Review'];
 
 export default function CreatePetitionScreen({ navigation }) {
   const { createPetition, user } = useApp();
   const [step, setStep] = useState(0);
-<<<<<<< HEAD
   const [aiTopic, setAiTopic] = useState('');
   const [aiNotes, setAiNotes] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -39,15 +27,6 @@ export default function CreatePetitionScreen({ navigation }) {
   });
   const u = (k, v) => setF((p) => ({ ...p, [k]: v }));
   const tagOptions = useMemo(() => PETITION_TAG_OPTIONS[f.category] || [], [f.category]);
-=======
-  const [f, setF] = useState({
-    category: '', title: '', location: '', organization: `${user.firstName} ${user.lastName}`,
-    summary: '', why: '', ask: '', tags: [], tagInput: '',
-    urgency: 'medium', recipient: '', goal: '', agreed: false,
-  });
-  const u = (k, v) => setF((p) => ({ ...p, [k]: v }));
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-
   const valid = () => {
     switch (step) {
       case 0: return !!f.category;
@@ -64,7 +43,6 @@ export default function CreatePetitionScreen({ navigation }) {
   const next = () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); if (step < 6) setStep(step + 1); else submit(); };
   const back = () => { if (step > 0) setStep(step - 1); else navigation.goBack(); };
 
-<<<<<<< HEAD
   const chooseCategory = (category) => {
     setF((prev) => {
       const nextOptions = PETITION_TAG_OPTIONS[category] || [];
@@ -138,13 +116,7 @@ export default function CreatePetitionScreen({ navigation }) {
       setAiError(err.message || 'AI draft failed. Please try again.');
     } finally {
       setAiLoading(false);
-    }
-=======
-  const addTag = () => {
-    const t = f.tagInput.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-    if (t && !f.tags.includes(t) && f.tags.length < 6) { u('tags', [...f.tags, t]); u('tagInput', ''); }
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-  };
+    }  };
 
   const submit = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -179,7 +151,6 @@ export default function CreatePetitionScreen({ navigation }) {
         <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {step === 0 && (
             <StepWrap q="What kind of petition?" h="Choose the category that best fits.">
-<<<<<<< HEAD
               <View style={s.aiBox}>
                 <View style={s.aiHeader}>
                   <MaterialCommunityIcons name="creation" size={16} color={COLORS.tertiary} />
@@ -211,14 +182,7 @@ export default function CreatePetitionScreen({ navigation }) {
               {PETITION_CATEGORIES.map((c) => {
                 const active = f.category === c.key; const cs = CATEGORY_STYLE[c.key];
                 return (
-                  <TouchableOpacity key={c.key} style={[s.catItem, active && { borderColor: cs.glow, backgroundColor: cs.glow + '10' }]} onPress={() => chooseCategory(c.key)} activeOpacity={0.8}>
-=======
-              {PETITION_CATEGORIES.map((c) => {
-                const active = f.category === c.key; const cs = CATEGORY_STYLE[c.key];
-                return (
-                  <TouchableOpacity key={c.key} style={[s.catItem, active && { borderColor: cs.glow, backgroundColor: cs.glow + '10' }]} onPress={() => u('category', c.key)} activeOpacity={0.8}>
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-                    <View style={[s.catIcon, { backgroundColor: active ? cs.glow + '20' : 'rgba(255,255,255,0.05)' }]}>
+                  <TouchableOpacity key={c.key} style={[s.catItem, active && { borderColor: cs.glow, backgroundColor: cs.glow + '10' }]} onPress={() => chooseCategory(c.key)} activeOpacity={0.8}>                    <View style={[s.catIcon, { backgroundColor: active ? cs.glow + '20' : 'rgba(255,255,255,0.05)' }]}>
                       <MaterialCommunityIcons name={cs.icon} size={20} color={active ? cs.glow : 'rgba(255,255,255,0.5)'} />
                     </View>
                     <Text style={[s.catLabel, active && { color: 'white' }]}>{c.label}</Text>
@@ -242,7 +206,6 @@ export default function CreatePetitionScreen({ navigation }) {
             </StepWrap>
           )}
           {step === 3 && (
-<<<<<<< HEAD
             <StepWrap q="What are we asking for?" h="Clearly state the ask and choose tags.">
               <Field label="The ask" value={f.ask} onChange={(v) => u('ask', v)} placeholder="What action do you want taken?" multi max={300} />
               <Text style={s.fieldLabel}>TAGS - CHOOSE UP TO 4</Text>
@@ -256,27 +219,7 @@ export default function CreatePetitionScreen({ navigation }) {
                   </TouchableOpacity>
                 );})}
               </View>
-              {!tagOptions.length && <Text style={s.aiError}>Choose a category first to see tags.</Text>}
-=======
-            <StepWrap q="What are we asking for?" h="Clearly state the ask and add tags.">
-              <Field label="The ask" value={f.ask} onChange={(v) => u('ask', v)} placeholder="What action do you want taken?" multi max={300} />
-              <Text style={s.fieldLabel}>TAGS</Text>
-              <View style={s.tagInputRow}>
-                <TextInput style={s.tagInput} placeholder="Add tag…" placeholderTextColor="rgba(255,255,255,0.3)" value={f.tagInput} onChangeText={(v) => u('tagInput', v)} onSubmitEditing={addTag} maxLength={24} />
-                <TouchableOpacity style={s.tagAddBtn} onPress={addTag}>
-                  <MaterialIcons name="add" size={18} color={COLORS.onTertiary} />
-                </TouchableOpacity>
-              </View>
-              <View style={s.tagsWrap}>
-                {f.tags.map((t) => (
-                  <TouchableOpacity key={t} style={s.tag} onPress={() => u('tags', f.tags.filter((x) => x !== t))}>
-                    <Text style={s.tagText}>#{t}</Text>
-                    <MaterialIcons name="close" size={12} color="rgba(255,255,255,0.6)" />
-                  </TouchableOpacity>
-                ))}
-              </View>
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-            </StepWrap>
+              {!tagOptions.length && <Text style={s.aiError}>Choose a category first to see tags.</Text>}            </StepWrap>
           )}
           {step === 4 && (
             <StepWrap q="Urgency & Recipient" h="How urgent is this and who receives it?">
@@ -395,7 +338,6 @@ const s = StyleSheet.create({
   catItem: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: 14 },
   catIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   catLabel: { flex: 1, color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: '600' },
-<<<<<<< HEAD
   aiBox: { backgroundColor: 'rgba(78,222,163,0.06)', borderWidth: 1, borderColor: 'rgba(78,222,163,0.18)', borderRadius: 16, padding: 14, gap: 10, marginBottom: 8 },
   aiHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   aiTitle: { color: 'white', fontSize: 15, fontWeight: '900' },
@@ -409,18 +351,7 @@ const s = StyleSheet.create({
   charCount: { textAlign: 'right', color: 'rgba(255,255,255,0.25)', fontSize: 10, marginTop: 4 },
   tagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   tag: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(177,197,255,0.12)', borderWidth: 1, borderColor: 'rgba(177,197,255,0.25)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
-  tagSelected: { backgroundColor: 'rgba(177,197,255,0.24)', borderColor: COLORS.primary },
-=======
-  fieldLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 6, marginTop: 10 },
-  fieldInput: { backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderRadius: 14, paddingHorizontal: 14, height: 48, color: 'white', fontSize: 14 },
-  charCount: { textAlign: 'right', color: 'rgba(255,255,255,0.25)', fontSize: 10, marginTop: 4 },
-  tagInputRow: { flexDirection: 'row', gap: 8 },
-  tagInput: { flex: 1, backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderRadius: 14, paddingHorizontal: 14, height: 48, color: 'white', fontSize: 14 },
-  tagAddBtn: { width: 48, height: 48, borderRadius: 14, backgroundColor: COLORS.tertiary, alignItems: 'center', justifyContent: 'center' },
-  tagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  tag: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(177,197,255,0.12)', borderWidth: 1, borderColor: 'rgba(177,197,255,0.25)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-  tagText: { color: COLORS.primary, fontSize: 12, fontWeight: '700' },
+  tagSelected: { backgroundColor: 'rgba(177,197,255,0.24)', borderColor: COLORS.primary },  tagText: { color: COLORS.primary, fontSize: 12, fontWeight: '700' },
   urgencyRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   urgencyChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
   urgencyDot: { width: 8, height: 8, borderRadius: 4 },

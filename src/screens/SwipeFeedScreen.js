@@ -7,46 +7,43 @@ import AppHeader from '../components/AppHeader';
 import SwipeDeck from '../components/SwipeDeck';
 import ActionButtons from '../components/ActionButtons';
 import SignModal from '../components/SignModal';
-<<<<<<< HEAD
 import ReportModal from '../components/ReportModal';
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 
 export default function SwipeFeedScreen({ navigation }) {
   const {
-    user, petitions, deckIndex, dailyCount, DAILY_GOAL,
-<<<<<<< HEAD
-    advanceDeck, signPetition, resetDeck, reportPetition,
+    petitions,
+    deckIndex,
+    dailyCount,
+    DAILY_GOAL,
+    advanceDeck,
+    resetDeck,
+    signPetition,
+    toggleSave,
+    savedIds,
+    reportPetition,
   } = useApp();
 
   const [pendingSign, setPendingSign] = useState(null);
-  const [pendingReport, setPendingReport] = useState(null);
-=======
-    advanceDeck, signPetition, resetDeck,
-  } = useApp();
-
-  const [pendingSign, setPendingSign] = useState(null);
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const [modalVisible, setModalVisible] = useState(false);
+  const [pendingReport, setPendingReport] = useState(null);
+
+  const currentPetition = petitions[deckIndex];
 
   const handleSwipeRight = (petition) => {
     setPendingSign(petition);
     setModalVisible(true);
   };
+
   const handleSwipeLeft = () => advanceDeck();
   const handleTap = (petition) => navigation.navigate('PetitionDetail', { petitionId: petition.id });
 
-<<<<<<< HEAD
   const handleConfirmSign = (petition, comment) => {
     signPetition(petition.id, { comment });
-=======
-  const handleConfirmSign = (petition) => {
-    signPetition(petition.id);
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     setModalVisible(false);
     setPendingSign(null);
     advanceDeck();
   };
+
   const handleCancelSign = () => {
     setModalVisible(false);
     setPendingSign(null);
@@ -56,8 +53,6 @@ export default function SwipeFeedScreen({ navigation }) {
   const triggerSwipe = (dir) => {
     if (SwipeDeck.triggerSwipe) SwipeDeck.triggerSwipe(dir);
   };
-
-  const currentPetition = petitions[deckIndex];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -83,38 +78,33 @@ export default function SwipeFeedScreen({ navigation }) {
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
           onTap={handleTap}
-<<<<<<< HEAD
           onReport={(petition) => setPendingReport(petition)}
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-          onReset={resetDeck}
         />
       </View>
 
-      {deckIndex < petitions.length && (
-        <ActionButtons
-          onSkip={() => triggerSwipe('left')}
-          onInfo={() => currentPetition && handleTap(currentPetition)}
-          onSign={() => triggerSwipe('right')}
-        />
-      )}
+      <ActionButtons
+        onPass={() => triggerSwipe('left')}
+        onSign={() => {
+          if (currentPetition) triggerSwipe('right');
+        }}
+        onSave={() => currentPetition && toggleSave(currentPetition.id)}
+        saved={currentPetition ? savedIds.includes(currentPetition.id) : false}
+        onReset={resetDeck}
+      />
 
       <SignModal
         visible={modalVisible}
         petition={pendingSign}
-        user={user}
-        onClose={handleCancelSign}
         onConfirm={handleConfirmSign}
+        onCancel={handleCancelSign}
       />
-<<<<<<< HEAD
+
       <ReportModal
-        visible={!!pendingReport}
+        visible={Boolean(pendingReport)}
         petition={pendingReport}
         onClose={() => setPendingReport(null)}
-        onSubmit={(payload) => reportPetition(pendingReport.id, payload)}
+        onSubmit={reportPetition}
       />
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     </SafeAreaView>
   );
 }

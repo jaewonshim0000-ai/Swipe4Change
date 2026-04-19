@@ -9,12 +9,7 @@ import { getLevel } from '../utils/helpers';
 export default function AppHeader({ onProfilePress, onNotifPress }) {
   const { user, signedIds, unreadCount } = useApp();
   const level = getLevel(signedIds.length);
-<<<<<<< HEAD
   const initials = `${(user.firstName || 'U')[0]}${(user.lastName || '')[0]}`.toUpperCase();
-=======
-  const initials = user.name.split(' ').map(n => n[0]).join('');
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-
   return (
     <View style={styles.header}>
       <LinearGradient colors={[COLORS.primaryDeep, COLORS.primaryContainer]} style={styles.logoBox}>

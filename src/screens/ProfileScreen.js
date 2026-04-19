@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
-=======
-import React, { useState } from 'react';
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,31 +16,25 @@ export default function ProfileScreen({ navigation }) {
   const level = getLevel(signedIds.length);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-<<<<<<< HEAD
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    email: user.email || '',
     location: user.location || '',
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     address: user.address || '',
   });
-  const upd = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-<<<<<<< HEAD
   useEffect(() => {
-    if (editing) return;
     setForm({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
       location: user.location || '',
       address: user.address || '',
     });
-  }, [editing, user.address, user.email, user.firstName, user.lastName, user.location]);
+  }, [user]);
 
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
+  const upd = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -52,31 +42,28 @@ export default function ProfileScreen({ navigation }) {
       aspect: [1, 1],
       quality: 0.5,
     });
-    if (!result.canceled && result.assets[0]) {
+    if (!result.canceled && result.assets?.[0]) {
       updateUser({ profilePic: result.assets[0].uri });
     }
   };
 
   const saveProfile = () => {
-<<<<<<< HEAD
-    updateUser({
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      location: form.location,
-      address: form.address,
-    });
-=======
-    updateUser({ firstName: form.firstName, lastName: form.lastName, email: form.email, address: form.address });
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
+    updateUser(form);
     setEditing(false);
   };
 
   const toggleInterest = (cat) => {
-    const interests = user.interests.includes(cat)
+    const interests = user.interests?.includes(cat)
       ? user.interests.filter((c) => c !== cat)
-      : [...user.interests, cat];
+      : [...(user.interests || []), cat];
     updateUser({ interests });
+  };
+
+  const handleLogout = () => {
+    Alert.alert('Sign out?', 'You can sign back in anytime.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: logout },
+    ]);
   };
 
   const initials = `${(user.firstName || 'A')[0]}${(user.lastName || 'C')[0]}`;
@@ -85,13 +72,12 @@ export default function ProfileScreen({ navigation }) {
     <SafeAreaView style={s.container} edges={['top']}>
       <View style={s.header}>
         <Text style={s.title}>Profile</Text>
-        <TouchableOpacity onPress={() => editing ? saveProfile() : setEditing(true)}>
+        <TouchableOpacity onPress={() => (editing ? saveProfile() : setEditing(true))}>
           <Text style={s.editBtn}>{editing ? 'Save' : 'Edit'}</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {/* Avatar */}
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <View style={s.avatarSection}>
           <TouchableOpacity onPress={pickImage} activeOpacity={0.8}>
             {user.profilePic ? (
@@ -108,69 +94,55 @@ export default function ProfileScreen({ navigation }) {
           <Text style={s.name}>{user.firstName} {user.lastName}</Text>
           <View style={[s.levelBadge, { backgroundColor: level.color + '15', borderColor: level.color + '40' }]}>
             <MaterialCommunityIcons name="medal" size={12} color={level.color} />
-<<<<<<< HEAD
             <Text style={[s.levelText, { color: level.color }]}>{level.name.toUpperCase()} - LV {level.level}</Text>
-=======
-            <Text style={[s.levelText, { color: level.color }]}>{level.name.toUpperCase()} · LV {level.level}</Text>
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           </View>
         </View>
 
-        {/* Editable fields */}
         <Text style={s.sectionLabel}>PERSONAL INFORMATION</Text>
         <View style={s.fieldCard}>
           <FieldRow label="First Name" value={form.firstName} onChange={(v) => upd('firstName', v)} editable={editing} />
           <FieldRow label="Last Name" value={form.lastName} onChange={(v) => upd('lastName', v)} editable={editing} />
           <FieldRow label="Email" value={form.email} onChange={(v) => upd('email', v)} editable={editing} keyboardType="email-address" />
-<<<<<<< HEAD
           <FieldRow label="Location" value={form.location} onChange={(v) => upd('location', v)} editable={editing} />
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           <FieldRow label="Address" value={form.address} onChange={(v) => upd('address', v)} editable={editing} last />
         </View>
 
-        {/* Signature */}
-        <Text style={s.sectionLabel}>SIGNATURE</Text>
-        <SignaturePad
-          height={140}
-          initialPath={user.signature}
-          onSave={(sig) => updateUser({ signature: sig })}
-        />
-
-        {/* Calendar */}
-        <View style={{ marginTop: 20 }}>
-          <ContributionCalendar contributions={contributions} />
-        </View>
-
-        {/* Interests */}
         <Text style={s.sectionLabel}>INTERESTS</Text>
         <View style={s.interestsWrap}>
           {PETITION_CATEGORIES.map((cat) => {
-            const active = user.interests.includes(cat.key);
-            const cs = CATEGORY_STYLE[cat.key];
+            const active = user.interests?.includes(cat.key);
+            const style = CATEGORY_STYLE[cat.key] || CATEGORY_STYLE.Climate;
             return (
               <TouchableOpacity
                 key={cat.key}
-                style={[s.interestChip, active && { borderColor: cs.glow + '60', backgroundColor: cs.glow + '12' }]}
+                style={[
+                  s.interestChip,
+                  active && { backgroundColor: `${style.glow}18`, borderColor: `${style.glow}40` },
+                ]}
                 onPress={() => toggleInterest(cat.key)}
               >
-                <MaterialCommunityIcons name={cs.icon} size={13} color={active ? cs.glow : 'rgba(255,255,255,0.4)'} />
-                <Text style={[s.interestText, active && { color: cs.glow }]}>{cat.key}</Text>
+                <MaterialCommunityIcons name={style.icon} size={14} color={active ? style.glow : 'rgba(255,255,255,0.4)'} />
+                <Text style={[s.interestText, active && { color: style.glow }]}>{cat.key}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        {/* Settings */}
+        <Text style={s.sectionLabel}>SIGNATURE</Text>
+        <SignaturePad
+          initialPath={user.signature}
+          onSave={(signature) => updateUser({ signature })}
+          height={170}
+        />
+
+        <Text style={s.sectionLabel}>ACTIVITY</Text>
+        <ContributionCalendar contributions={contributions} />
+
         <Text style={s.sectionLabel}>SETTINGS</Text>
-        <SettingBtn icon="shield" label="Security & Privacy" onPress={() => navigation.navigate('Security')} />
-<<<<<<< HEAD
-        <SettingBtn icon="notifications-none" label="Notifications" onPress={() => navigation.navigate('Notifications')} />
-=======
-        <SettingBtn icon="notifications-none" label="Notifications" />
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
+        <SettingBtn icon="security" label="Security & Privacy" onPress={() => navigation.navigate('Security')} />
+        <SettingBtn icon="notifications-none" label="Notification Preferences" />
         <SettingBtn icon="help-outline" label="Help & Feedback" />
-        <SettingBtn icon="logout" label="Sign Out" danger onPress={logout} />
+        <SettingBtn icon="logout" label="Sign Out" danger onPress={handleLogout} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -182,11 +154,7 @@ const FieldRow = ({ label, value, onChange, editable, keyboardType, last }) => (
     {editable ? (
       <TextInput style={fieldS.input} value={value} onChangeText={onChange} keyboardType={keyboardType} />
     ) : (
-<<<<<<< HEAD
       <Text style={fieldS.value} numberOfLines={1}>{value || '-'}</Text>
-=======
-      <Text style={fieldS.value} numberOfLines={1}>{value || '—'}</Text>
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     )}
   </View>
 );
@@ -210,9 +178,9 @@ const fieldS = StyleSheet.create({
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 10 },
+  scroll: { padding: 20, paddingBottom: 40 },
   title: { color: 'white', fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
   editBtn: { color: COLORS.primary, fontSize: 14, fontWeight: '700' },
-
   avatarSection: { alignItems: 'center', marginBottom: 20 },
   avatar: { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center', marginBottom: 12, overflow: 'hidden' },
   avatarText: { color: 'white', fontSize: 32, fontWeight: '900' },
@@ -228,14 +196,11 @@ const s = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, marginTop: 8,
   },
   levelText: { fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
-
   sectionLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '800', letterSpacing: 2, marginTop: 24, marginBottom: 10 },
-
   fieldCard: {
     backgroundColor: COLORS.surfaceContainer, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
     borderRadius: 18, paddingHorizontal: 14,
   },
-
   interestsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   interestChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -243,7 +208,6 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
   interestText: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.4)' },
-
   settingRow: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
     paddingVertical: 14, paddingHorizontal: 16,

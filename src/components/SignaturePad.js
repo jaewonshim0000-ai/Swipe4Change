@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import React, { useEffect, useRef, useState } from 'react';
-=======
-import React, { useState, useRef } from 'react';
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 import { View, PanResponder, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -11,7 +7,6 @@ import { COLORS } from '../theme';
 export default function SignaturePad({ onSave, initialPath, height = 160 }) {
   const [paths, setPaths] = useState(initialPath ? [initialPath] : []);
   const [currentPath, setCurrentPath] = useState('');
-<<<<<<< HEAD
   const pathsRef = useRef(initialPath ? [initialPath] : []);
   const currentPathRef = useRef('');
 
@@ -22,22 +17,19 @@ export default function SignaturePad({ onSave, initialPath, height = 160 }) {
     setPaths(next);
     setCurrentPath('');
   }, [initialPath]);
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (e) => {
-        const { locationX, locationY } = e.nativeEvent;
-<<<<<<< HEAD
-        const next = `M${locationX.toFixed(1)},${locationY.toFixed(1)}`;
-        currentPathRef.current = next;
-        setCurrentPath(next);
+      onPanResponderGrant: (evt) => {
+        const { locationX, locationY } = evt.nativeEvent;
+        const path = `M${locationX.toFixed(1)},${locationY.toFixed(1)}`;
+        currentPathRef.current = path;
+        setCurrentPath(path);
       },
-      onPanResponderMove: (e) => {
-        const { locationX, locationY } = e.nativeEvent;
+      onPanResponderMove: (evt) => {
+        const { locationX, locationY } = evt.nativeEvent;
         const next = `${currentPathRef.current} L${locationX.toFixed(1)},${locationY.toFixed(1)}`;
         currentPathRef.current = next;
         setCurrentPath(next);
@@ -47,34 +39,20 @@ export default function SignaturePad({ onSave, initialPath, height = 160 }) {
           const all = [...pathsRef.current, currentPathRef.current];
           pathsRef.current = all;
           currentPathRef.current = '';
-=======
-        setCurrentPath(`M${locationX.toFixed(1)},${locationY.toFixed(1)}`);
-      },
-      onPanResponderMove: (e) => {
-        const { locationX, locationY } = e.nativeEvent;
-        setCurrentPath((p) => `${p} L${locationX.toFixed(1)},${locationY.toFixed(1)}`);
-      },
-      onPanResponderRelease: () => {
-        if (currentPath) {
-          const all = [...paths, currentPath];
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           setPaths(all);
           setCurrentPath('');
-          if (onSave) onSave(all.join(' '));
+          onSave?.(all.join(' '));
         }
       },
     })
   ).current;
 
   const clear = () => {
-<<<<<<< HEAD
     pathsRef.current = [];
     currentPathRef.current = '';
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     setPaths([]);
     setCurrentPath('');
-    if (onSave) onSave(null);
+    onSave?.(null);
   };
 
   const hasSig = paths.length > 0 || currentPath.length > 0;
@@ -84,47 +62,56 @@ export default function SignaturePad({ onSave, initialPath, height = 160 }) {
       <View style={styles.pad} {...panResponder.panHandlers}>
         <Svg height="100%" width="100%">
           {paths.map((p, i) => (
-            <Path key={i} d={p} stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <Path key={`${p}-${i}`} d={p} stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
           ))}
           {currentPath ? (
             <Path d={currentPath} stroke="white" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
           ) : null}
         </Svg>
-        {!hasSig && (
+        {!hasSig ? (
           <View style={styles.placeholder} pointerEvents="none">
             <MaterialIcons name="draw" size={20} color="rgba(255,255,255,0.25)" />
             <Text style={styles.placeholderText}>Draw your signature here</Text>
           </View>
-        )}
+        ) : null}
       </View>
-      {hasSig && (
+      {hasSig ? (
         <TouchableOpacity style={styles.clearBtn} onPress={clear}>
           <MaterialIcons name="refresh" size={14} color="rgba(255,255,255,0.6)" />
           <Text style={styles.clearText}>Clear</Text>
         </TouchableOpacity>
-      )}
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { gap: 6 },
-  pad: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16, borderStyle: 'dashed',
+  container: {
+    borderRadius: 16,
     overflow: 'hidden',
+    backgroundColor: COLORS.surfaceContainer,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
+  pad: { flex: 1, position: 'relative' },
   placeholder: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center', justifyContent: 'center', gap: 6,
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
-  placeholderText: { color: 'rgba(255,255,255,0.25)', fontSize: 12, fontWeight: '600' },
+  placeholderText: { color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: '600' },
   clearBtn: {
-    alignSelf: 'flex-end',
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 4,
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.28)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  clearText: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '600' },
+  clearText: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '700' },
 });

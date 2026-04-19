@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import React, { useState } from 'react';
-=======
-import React from 'react';
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,22 +6,19 @@ import { COLORS } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import AppHeader from '../components/AppHeader';
 import PetitionListItem from '../components/PetitionListItem';
-<<<<<<< HEAD
 import ReportModal from '../components/ReportModal';
 
 export default function SavedPetitionsScreen({ navigation }) {
   const { savedIds, getPetitionById, reportPetition } = useApp();
   const [pendingReport, setPendingReport] = useState(null);
-=======
-
-export default function SavedPetitionsScreen({ navigation }) {
-  const { savedIds, getPetitionById } = useApp();
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const items = savedIds.map(getPetitionById).filter(Boolean);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <AppHeader onProfilePress={() => navigation.navigate('ProfileTab')} onNotifPress={() => navigation.navigate('Notifications')} />
+      <AppHeader
+        onProfilePress={() => navigation.navigate('ProfileTab')}
+        onNotifPress={() => navigation.navigate('Notifications')}
+      />
 
       <View style={styles.titleBlock}>
         <Text style={styles.title}>Saved</Text>
@@ -34,10 +27,7 @@ export default function SavedPetitionsScreen({ navigation }) {
         </Text>
       </View>
 
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 12 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         {items.length === 0 ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
@@ -53,25 +43,20 @@ export default function SavedPetitionsScreen({ navigation }) {
             <PetitionListItem
               key={p.id}
               petition={p}
-              meta={`${p.organization} · ${p.daysLeft}d left`}
+              meta={`${p.organization} - ${p.daysLeft}d left`}
               onPress={() => navigation.navigate('PetitionDetail', { petitionId: p.id })}
-<<<<<<< HEAD
               onReport={(petition) => setPendingReport(petition)}
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
             />
           ))
         )}
       </ScrollView>
-<<<<<<< HEAD
+
       <ReportModal
-        visible={!!pendingReport}
+        visible={Boolean(pendingReport)}
         petition={pendingReport}
         onClose={() => setPendingReport(null)}
-        onSubmit={(payload) => reportPetition(pendingReport.id, payload)}
+        onSubmit={reportPetition}
       />
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     </SafeAreaView>
   );
 }
@@ -81,6 +66,7 @@ const styles = StyleSheet.create({
   titleBlock: { paddingHorizontal: 24, paddingTop: 4, paddingBottom: 8 },
   title: { color: 'white', fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
   sub: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 2 },
+  list: { padding: 20, paddingBottom: 40, gap: 12 },
   empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24 },
   emptyIcon: {
     width: 64, height: 64, borderRadius: 32,

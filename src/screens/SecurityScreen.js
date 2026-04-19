@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -25,7 +24,6 @@ import { useApp } from '../contexts/AppContext';
 import { auth } from '../config/firebase';
 
 const PHONE_RECAPTCHA_ID = 'phone-2fa-recaptcha';
-
 const normalizePhoneNumber = (value = '') => value.trim().replace(/[^\d+]/g, '');
 
 const getPhoneRecaptchaVerifier = () => {
@@ -54,20 +52,11 @@ const resetPhoneRecaptchaVerifier = () => {
   }
   window.swipe4changePhone2FARecaptcha = null;
 };
-=======
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Switch, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS } from '../theme';
-import { useApp } from '../contexts/AppContext';
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 
 export default function SecurityScreen({ navigation }) {
   const { user, updateUser } = useApp();
   const [twoFA, setTwoFA] = useState(user.twoFactorEnabled || false);
   const [biometric, setBiometric] = useState(false);
-<<<<<<< HEAD
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || '');
   const [pendingPhoneNumber, setPendingPhoneNumber] = useState('');
   const [verificationId, setVerificationId] = useState('');
@@ -172,10 +161,7 @@ export default function SecurityScreen({ navigation }) {
       }
 
       setTwoFA(false);
-      updateUser({
-        twoFactorEnabled: false,
-        twoFactorMethod: '',
-      });
+      updateUser({ twoFactorEnabled: false, twoFactorMethod: '' });
       setPhoneMessage('Phone 2FA is turned off.');
     } catch (error) {
       setPhoneMessage(error.message || 'Could not turn off phone 2FA.');
@@ -186,40 +172,24 @@ export default function SecurityScreen({ navigation }) {
   const toggle2FA = (val) => {
     if (val) {
       if (!phoneVerified) {
-        Alert.alert(
-          'Verify phone first',
-          'Send a code to your phone and confirm it below to enable 2FA.'
-        );
+        Alert.alert('Verify phone first', 'Send a code to your phone and confirm it below to enable 2FA.');
         return;
       }
       Alert.alert(
         'Enable 2FA',
         'A verification code will be sent to your verified phone when Firebase asks for a second factor.',
-=======
-
-  const toggle2FA = (val) => {
-    if (val) {
-      Alert.alert(
-        'Enable 2FA',
-        'A verification code will be sent to your email each time you sign in from a new device.',
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
         [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Enable',
             onPress: () => {
               setTwoFA(true);
-<<<<<<< HEAD
               updateUser({ twoFactorEnabled: true, twoFactorMethod: 'phone' });
-=======
-              updateUser({ twoFactorEnabled: true });
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
             },
           },
         ]
       );
     } else {
-<<<<<<< HEAD
       Alert.alert(
         'Turn off 2FA?',
         'Your phone will no longer be required as a second factor for this account.',
@@ -228,10 +198,6 @@ export default function SecurityScreen({ navigation }) {
           { text: 'Turn off', style: 'destructive', onPress: disablePhone2FA },
         ]
       );
-=======
-      setTwoFA(false);
-      updateUser({ twoFactorEnabled: false });
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     }
   };
 
@@ -246,18 +212,16 @@ export default function SecurityScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        {/* Security status */}
         <View style={styles.statusCard}>
           <View style={styles.statusIcon}>
             <MaterialIcons name="security" size={24} color={COLORS.tertiary} />
           </View>
           <Text style={styles.statusTitle}>Your data is protected</Text>
           <Text style={styles.statusSub}>
-            All communications are encrypted with TLS 1.3. Signatures are stored using AES-256 encryption at rest.
+            All communications are encrypted with TLS. Signatures can be stored using AES-256 encryption at rest.
           </Text>
         </View>
 
-        {/* 2FA */}
         <Text style={styles.sectionLabel}>AUTHENTICATION</Text>
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>
@@ -266,13 +230,9 @@ export default function SecurityScreen({ navigation }) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.settingTitle}>Two-Factor Authentication</Text>
-<<<<<<< HEAD
               <Text style={styles.settingDesc}>
                 {phoneVerified ? `Phone verified: ${user.phoneNumber}` : 'Verify a phone number before enabling 2FA'}
               </Text>
-=======
-              <Text style={styles.settingDesc}>Verify via email code on new devices</Text>
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
             </View>
           </View>
           <Switch
@@ -283,7 +243,6 @@ export default function SecurityScreen({ navigation }) {
           />
         </View>
 
-<<<<<<< HEAD
         <View style={styles.phoneCard}>
           <View style={styles.phoneHeader}>
             <View style={[styles.settingIcon, { backgroundColor: 'rgba(78,222,163,0.1)' }]}>
@@ -293,12 +252,12 @@ export default function SecurityScreen({ navigation }) {
               <Text style={styles.settingTitle}>Phone Number Verification</Text>
               <Text style={styles.settingDesc}>Use SMS codes as your second factor</Text>
             </View>
-            {phoneVerified && (
+            {phoneVerified ? (
               <View style={styles.verifiedPill}>
                 <MaterialIcons name="check" size={13} color={COLORS.onTertiary} />
                 <Text style={styles.verifiedText}>Verified</Text>
               </View>
-            )}
+            ) : null}
           </View>
 
           <TextInput
@@ -360,8 +319,6 @@ export default function SecurityScreen({ navigation }) {
           {Platform.OS === 'web' ? <View nativeID={PHONE_RECAPTCHA_ID} /> : null}
         </View>
 
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>
             <View style={[styles.settingIcon, { backgroundColor: 'rgba(177,197,255,0.1)' }]}>
@@ -380,18 +337,12 @@ export default function SecurityScreen({ navigation }) {
           />
         </View>
 
-        {/* Encryption */}
         <Text style={styles.sectionLabel}>DATA PROTECTION</Text>
-        <InfoRow icon="lock" title="End-to-End Encryption"
-          desc="All petition signatures are encrypted in transit and at rest using AES-256." />
-        <InfoRow icon="vpn-key" title="Secure Key Storage"
-          desc="Authentication tokens are stored in the device's secure enclave via AsyncStorage encryption." />
-        <InfoRow icon="shield" title="Signature Privacy"
-          desc="Your handwritten signature is only shared with petition recipients you explicitly consent to." />
-        <InfoRow icon="delete-forever" title="Data Deletion"
-          desc="Request complete deletion of your data at any time from Profile settings." />
+        <InfoRow icon="lock" title="Encryption" desc="Signatures can be encrypted in transit and at rest." />
+        <InfoRow icon="vpn-key" title="Secure Key Storage" desc="Authentication is handled by Firebase and server secrets stay on the backend." />
+        <InfoRow icon="shield" title="Signature Privacy" desc="Your saved signature is used only when you consent to sign a petition." />
+        <InfoRow icon="delete-forever" title="Data Deletion" desc="Account data can be removed through backend/database administration." />
 
-        {/* Sessions */}
         <Text style={styles.sectionLabel}>ACTIVE SESSIONS</Text>
         <View style={styles.sessionRow}>
           <MaterialCommunityIcons name="cellphone" size={18} color="rgba(255,255,255,0.6)" />
@@ -401,11 +352,6 @@ export default function SecurityScreen({ navigation }) {
           </View>
           <View style={styles.activeDot} />
         </View>
-
-        <TouchableOpacity style={styles.dangerBtn}>
-          <MaterialIcons name="logout" size={16} color={COLORS.error} />
-          <Text style={styles.dangerText}>Sign out of all devices</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -436,7 +382,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { color: 'white', fontSize: 17, fontWeight: '800' },
   body: { padding: 20, paddingBottom: 40 },
-
   statusCard: {
     backgroundColor: 'rgba(78,222,163,0.06)',
     borderWidth: 1, borderColor: 'rgba(78,222,163,0.15)',
@@ -449,12 +394,10 @@ const styles = StyleSheet.create({
   },
   statusTitle: { color: 'white', fontSize: 16, fontWeight: '800', marginBottom: 6 },
   statusSub: { color: 'rgba(255,255,255,0.6)', fontSize: 12, textAlign: 'center', lineHeight: 17 },
-
   sectionLabel: {
     color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '800',
     letterSpacing: 2, marginTop: 24, marginBottom: 12,
   },
-
   settingRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: COLORS.surfaceContainer,
@@ -465,8 +408,6 @@ const styles = StyleSheet.create({
   settingIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   settingTitle: { color: 'white', fontSize: 14, fontWeight: '700' },
   settingDesc: { color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 2 },
-
-<<<<<<< HEAD
   phoneCard: {
     backgroundColor: COLORS.surfaceContainer,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
@@ -499,16 +440,12 @@ const styles = StyleSheet.create({
   phoneBtnDisabled: { opacity: 0.55 },
   phoneBtnText: { color: COLORS.onTertiary, fontSize: 12, fontWeight: '900' },
   phoneBtnSecondaryText: { color: 'white' },
-
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   infoRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
     backgroundColor: COLORS.surfaceContainer,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
     borderRadius: 16, padding: 14, marginBottom: 8,
   },
-
   sessionRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: COLORS.surfaceContainer,
@@ -518,12 +455,4 @@ const styles = StyleSheet.create({
   sessionDevice: { color: 'white', fontSize: 13, fontWeight: '700' },
   sessionDetail: { color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 1 },
   activeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.tertiary },
-
-  dangerBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 14, borderRadius: 14,
-    borderWidth: 1, borderColor: 'rgba(255,180,171,0.2)',
-    marginTop: 8,
-  },
-  dangerText: { color: COLORS.error, fontSize: 13, fontWeight: '700' },
 });

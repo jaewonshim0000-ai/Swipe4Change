@@ -113,12 +113,7 @@ export default function SignModal({ visible, petition, user, onClose, onConfirm 
                   </TouchableOpacity>
                   <TouchableOpacity style={[s.signBtn, !consent && { opacity: 0.4 }]} onPress={handleSubmit} disabled={!consent || submitting} activeOpacity={0.9}>
                     <LinearGradient colors={[COLORS.tertiary, COLORS.tertiaryContainer]} style={s.signGrad}>
-<<<<<<< HEAD
-                      <Text style={s.signText}>{submitting ? 'Signing...' : 'Sign Petition'}</Text>
-=======
-                      <Text style={s.signText}>{submitting ? 'Signing…' : 'Sign Petition'}</Text>
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-                    </LinearGradient>
+                      <Text style={s.signText}>{submitting ? 'Signing...' : 'Sign Petition'}</Text>                    </LinearGradient>
                   </TouchableOpacity>
                 </View>
               </>

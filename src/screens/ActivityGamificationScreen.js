@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import React, { useState } from 'react';
-=======
-import React from 'react';
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -14,17 +10,11 @@ import LevelProgress from '../components/LevelProgress';
 import ContributionCalendar from '../components/ContributionCalendar';
 import BadgeCard from '../components/BadgeCard';
 import PetitionListItem from '../components/PetitionListItem';
-<<<<<<< HEAD
 import ReportModal from '../components/ReportModal';
 
 export default function ActivityGamificationScreen({ navigation }) {
   const { signedIds, getPetitionById, contributions, earnedBadges, createdPetitions, reportPetition } = useApp();
   const [pendingReport, setPendingReport] = useState(null);
-=======
-
-export default function ActivityGamificationScreen({ navigation }) {
-  const { signedIds, getPetitionById, contributions, earnedBadges, createdPetitions } = useApp();
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const items = signedIds.map(getPetitionById).filter(Boolean);
   const uniqueCats = new Set(items.map((i) => i.category)).size;
 
@@ -34,7 +24,8 @@ export default function ActivityGamificationScreen({ navigation }) {
         onProfilePress={() => navigation.navigate('ProfileTab')}
         onNotifPress={() => navigation.navigate('Notifications')}
       />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <Text style={s.title}>Activity</Text>
         <Text style={s.sub}>Track your impact and level up</Text>
 
@@ -42,19 +33,16 @@ export default function ActivityGamificationScreen({ navigation }) {
           <LevelProgress signedCount={signedIds.length} />
         </View>
 
-        {/* Stats */}
         <View style={s.stats}>
           <StatChip value={signedIds.length} label="SIGNED" color={COLORS.tertiary} />
           <StatChip value={createdPetitions.length} label="CREATED" color={COLORS.primary} />
           <StatChip value={uniqueCats} label="CAUSES" color="#fbbf24" />
         </View>
 
-        {/* Calendar */}
         <View style={{ marginTop: 4 }}>
           <ContributionCalendar contributions={contributions} />
         </View>
 
-        {/* Badges */}
         <Text style={s.section}>BADGES ({earnedBadges.length}/{BADGES.length})</Text>
         <View style={s.badgeGrid}>
           {BADGES.map((b) => (
@@ -62,7 +50,6 @@ export default function ActivityGamificationScreen({ navigation }) {
           ))}
         </View>
 
-        {/* Recent signatures */}
         <Text style={s.section}>RECENT SIGNATURES</Text>
         {items.length === 0 ? (
           <View style={s.empty}>
@@ -76,31 +63,21 @@ export default function ActivityGamificationScreen({ navigation }) {
               <PetitionListItem
                 key={p.id}
                 petition={p}
-                meta={`Signed · ${p.organization}`}
+                meta={`Signed - ${p.organization}`}
                 onPress={() => navigation.navigate('PetitionDetail', { petitionId: p.id })}
-<<<<<<< HEAD
                 onReport={(petition) => setPendingReport(petition)}
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
-                rightIcon={
-                  <View style={s.signedDot}>
-                    <MaterialIcons name="check" size={14} color={COLORS.tertiary} />
-                  </View>
-                }
               />
             ))}
           </View>
         )}
       </ScrollView>
-<<<<<<< HEAD
+
       <ReportModal
-        visible={!!pendingReport}
+        visible={Boolean(pendingReport)}
         petition={pendingReport}
         onClose={() => setPendingReport(null)}
-        onSubmit={(payload) => reportPetition(pendingReport.id, payload)}
+        onSubmit={reportPetition}
       />
-=======
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     </SafeAreaView>
   );
 }
@@ -114,9 +91,9 @@ const StatChip = ({ value, label, color }) => (
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
+  scroll: { padding: 20, paddingBottom: 40 },
   title: { color: 'white', fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
   sub: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 2 },
-
   stats: { flexDirection: 'row', gap: 10, marginTop: 16, marginBottom: 8 },
   chip: {
     flex: 1, backgroundColor: COLORS.surfaceContainer,
@@ -125,17 +102,8 @@ const s = StyleSheet.create({
   },
   chipVal: { fontSize: 22, fontWeight: '900', marginBottom: 2 },
   chipLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: '800', letterSpacing: 1.5 },
-
   section: { color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '800', letterSpacing: 2, marginTop: 24, marginBottom: 12 },
-
   badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' },
-
-  signedDot: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: 'rgba(78,222,163,0.15)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-
   empty: { alignItems: 'center', paddingTop: 30, gap: 6 },
   emptyTitle: { color: 'white', fontSize: 16, fontWeight: '800' },
   emptySub: { color: 'rgba(255,255,255,0.5)', fontSize: 13 },

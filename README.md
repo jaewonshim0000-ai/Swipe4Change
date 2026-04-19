@@ -1,155 +1,483 @@
-<<<<<<< HEAD
 # Swipe4Change
 
-A Tinder-style civic engagement app for discovering, saving, creating, and signing petitions.
+Swipe4Change is a civic engagement platform that makes it easier for people to discover, sign, create, save, and track petitions connected to real social issues and the United Nations Sustainable Development Goals.
 
-## Stack
+The app uses a swipe-based petition feed, personalized recommendations, petition creation tools, AI-assisted drafting, activity tracking, reporting, and secure account features to make civic participation faster and more approachable.
 
-- Expo SDK 54 / React Native / React Native Web
+## UN Sustainable Development Goals Connection
+
+Swipe4Change is designed around the idea that global change can start with simple local action.
+
+The strongest SDG connections are:
+
+- **Goal 16: Peace, Justice, and Strong Institutions** - petitions help people participate in public issues, raise concerns, request accountability, and support justice-centered causes.
+- **Goal 17: Partnerships for the Goals** - the platform connects users, communities, petition creators, recipients, and organizations around shared goals.
+
+The petition categories also support other SDGs:
+
+- **Goal 3: Good Health and Well-Being** - health, mental health, public health, and care access petitions.
+- **Goal 4: Quality Education** - school funding, student support, accessibility, and education policy petitions.
+- **Goal 10: Reduced Inequalities** - human rights, civil rights, equity, workers, and safety petitions.
+- **Goal 11: Sustainable Cities and Communities** - housing, transit, local safety, and community petitions.
+- **Goal 13: Climate Action** - clean energy, emissions, public lands, resilience, and climate justice petitions.
+- **Goal 14: Life Below Water** - ocean, plastic pollution, coastal, and marine life petitions.
+- **Goal 15: Life on Land** - wildlife, habitat, biodiversity, and conservation petitions.
+
+## What The App Does
+
+Swipe4Change turns petitions into an interactive, mobile-friendly experience:
+
+1. Users create an account and choose their interests.
+2. The app personalizes the petition feed based on selected categories.
+3. Users swipe through petition cards, open petition details, save petitions, report unsafe petitions, or sign petitions.
+4. Users can create their own petitions with structured fields and controlled tags.
+5. Users can generate an AI petition draft from a short topic idea.
+6. The app tracks signing activity, daily challenges, badges, levels, and notifications.
+
+## Features
+
+### Authentication
+
+- Firebase email/password authentication.
+- Local demo fallback mode for development.
+- Multi-user session isolation for profile, signature, signed petitions, saved petitions, notifications, and activity.
+- Firebase phone-number verification support for two-factor authentication on web.
+
+### Personalized Swiping Feed
+
+- Swipe-style petition cards.
+- Feed ranking based on user interests.
+- Feed resets when interests change so the new order is visible immediately.
+- Petition cards show category, location, urgency, signatures, progress, and quick actions.
+
+### Petition Creation
+
+Users can create petitions with:
+
+- Petition name.
+- Category.
+- Location.
+- Situation description.
+- What the petition is asking for.
+- Urgency tag.
+- Recipient.
+- Signature goal.
+- Controlled tag picker.
+- Petition card preview.
+
+### AI Petition Draft Generator
+
+- Users can enter a topic or idea.
+- Backend calls OpenRouter to generate a structured petition draft.
+- AI output is clamped to app-supported categories, tags, urgency values, and field lengths.
+- The OpenRouter API key stays on the backend and is never exposed to the frontend.
+
+### Petition Detail Page
+
+The petition detail view includes:
+
+- Image.
+- Category.
+- Location.
+- Petition name.
+- Proposer/organization.
+- Signed amount.
+- Weekly increase.
+- Urgency.
+- Progress bar.
+- Situation.
+- Requested action.
+- Recipient.
+- Bookmark button.
+- Sign button.
+- Report button.
+
+### Petition Signing
+
+- Loads profile name, email, location, and saved signature.
+- Asks for an optional comment.
+- Requires consent before signing.
+- Prevents duplicate signatures for the same user and petition.
+- Updates signing activity and petition signature counts.
+
+### Reporting System
+
+- Users can report false, malicious, spam, impersonation, harassment, or unsafe petitions.
+- Reports are stored through the backend.
+- Report emails can be sent to an admin inbox through Resend when `RESEND_API_KEY` is configured.
+
+### Discover
+
+- Search petitions by keyword.
+- Filter by category.
+- Sort by trending, urgent, or newest.
+
+### Saved Petitions
+
+- Shows only petitions bookmarked by the current user.
+- Saved petitions are synced per account.
+
+### Activity And Gamification
+
+- Daily challenge progress.
+- Signing contribution calendar.
+- Badges.
+- Level system.
+- Recent signing history.
+- Total signed count.
+
+### Notifications
+
+Notifications can be used for:
+
+- Petition goal reached.
+- Badge earned.
+- Level up.
+- Daily challenge completion.
+- Petition created.
+- Petition reported.
+
+### Profile
+
+Profile data includes:
+
+- First name.
+- Last name.
+- Email.
+- Address.
+- Location.
+- Interests.
+- Profile picture.
+- Saved handwritten signature.
+
+### Security And Privacy
+
+- Firebase authentication.
+- Phone verification for 2FA.
+- Optional signature encryption at rest with `ENCRYPTION_KEY`.
+- TLS in production through hosting providers.
+- Backend-only secrets for Supabase service role, OpenRouter, and Resend.
+
+## Tech Stack
+
+### Frontend
+
+- Expo SDK 54
+- React Native
+- React Native Web
+- React 19
+- React Navigation
 - Firebase Authentication
-- Supabase database and storage-ready schema
-- Render-ready Express API
-- Firebase Hosting-ready static web export
+- Supabase client
+- AsyncStorage
+
+### Backend
+
+- Node.js
+- Express
+- Supabase
+- OpenRouter API
+- Resend email API
+
+### Deployment Targets
+
+- Firebase Hosting for the exported web app.
+- Render for the Express backend API.
+- Supabase for database persistence.
+- Firebase Authentication for user accounts.
+
+## Project Structure
+
+```text
+swipe4change/
+├── App.js
+├── app.json
+├── package.json
+├── firebase.json
+├── render.yaml
+├── README.md
+├── src/
+│   ├── components/
+│   │   ├── PetitionCard.js
+│   │   ├── PetitionListItem.js
+│   │   ├── ReportModal.js
+│   │   ├── SignModal.js
+│   │   ├── SignaturePad.js
+│   │   └── SwipeDeck.js
+│   ├── config/
+│   │   ├── api.js
+│   │   ├── firebase.js
+│   │   └── supabase.js
+│   ├── contexts/
+│   │   └── AppContext.js
+│   ├── data/
+│   │   └── petitions.js
+│   ├── navigation/
+│   │   └── AppNavigator.js
+│   ├── screens/
+│   │   ├── ActivityGamificationScreen.js
+│   │   ├── AuthScreen.js
+│   │   ├── CreatePetitionScreen.js
+│   │   ├── DiscoverScreen.js
+│   │   ├── NotificationsScreen.js
+│   │   ├── PetitionDetailScreen.js
+│   │   ├── ProfileScreen.js
+│   │   ├── SavedPetitionsScreen.js
+│   │   ├── SecurityScreen.js
+│   │   └── SwipeFeedScreen.js
+│   ├── theme/
+│   │   └── index.js
+│   └── utils/
+│       └── helpers.js
+└── backend/
+    ├── package.json
+    ├── schema.sql
+    └── server.js
+```
+
+## Getting Started
+
+### Prerequisites
+
+Install:
+
+- Node.js
+- npm
+- Expo CLI through `npx expo`
+
+Optional services for full production behavior:
+
+- Firebase project
+- Supabase project
+- Render account
+- OpenRouter API key
+- Resend API key
 
 ## Local Development
+
+Install frontend dependencies:
 
 ```bash
 npm install
 npx expo install --check
-npm start
 ```
 
-Run the backend locally:
+Install backend dependencies:
 
 ```bash
 cd backend
 npm install
+```
+
+Create a local environment file:
+
+```bash
+cd ..
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Start the backend API:
+
+```bash
+cd backend
 npm run dev
 ```
 
-Copy `.env.example` to `.env` and fill in the services you want to use.
+Start the Expo app in another terminal:
+
+```bash
+npm start
+```
+
+Run the web app:
+
+```bash
+npm run web
+```
+
+The local web app usually runs at:
+
+```text
+http://localhost:8081
+```
+
+The backend API usually runs at:
+
+```text
+http://localhost:3001
+```
 
 ## Environment Variables
 
-Expo variables must start with `EXPO_PUBLIC_`:
+Copy `.env.example` to `.env` and fill in the values you need.
 
-- `EXPO_PUBLIC_FIREBASE_API_KEY`
-- `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN`
-- `EXPO_PUBLIC_FIREBASE_PROJECT_ID`
-- `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
-- `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-- `EXPO_PUBLIC_FIREBASE_APP_ID`
-- `EXPO_PUBLIC_SUPABASE_URL`
-- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-- `EXPO_PUBLIC_API_BASE_URL`
+Expo frontend variables must start with `EXPO_PUBLIC_`:
 
-Backend-only variables for Render:
+```bash
+EXPO_PUBLIC_FIREBASE_API_KEY=
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+EXPO_PUBLIC_FIREBASE_APP_ID=
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `ENCRYPTION_KEY`
-- `OPENROUTER_API_KEY`
-- `OPENROUTER_MODEL`
-- `OPENROUTER_SITE_URL`
-- `OPENROUTER_APP_NAME`
-- `REPORT_EMAIL_TO`
-- `REPORT_EMAIL_FROM`
-- `RESEND_API_KEY`
-- `CORS_ORIGIN`
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
 
-If Firebase is not configured, the app runs in local demo auth mode. If the Render API URL is not configured, writes stay local except pending petition creation can use Supabase directly when Supabase env vars are present.
+EXPO_PUBLIC_API_BASE_URL=http://localhost:3001
+```
 
-## Features
+Backend-only variables:
 
-- Firebase-backed login and signup with local fallback mode
-- Multi-user session isolation for profile, signature, saved petitions, signed petitions, notifications, and activity
-- Personalized swipe feed based on profile interests
-- Feed resets automatically when interests change so the reordered deck is visible right away
-- Daily challenge progress and completion notifications
-- Create petition wizard with category, title, location, situation, ask, urgency, recipient, goal, tags, and preview
-- AI petition draft generator from a short topic prompt, powered by the backend OpenRouter API integration
-- Controlled tag picker by category to avoid duplicate freeform tags
-- Petition report flow for false, malicious, spam, impersonation, or unsafe content
-- Report email alerts to the admin inbox when `RESEND_API_KEY` is configured
-- Petition detail view with image/category/location/proposer/signature counts/weekly growth/urgency/progress/situation/ask/recipients/bookmark/sign actions
-- Signing modal that loads profile name, email, location, and signature, then asks for comment and consent
-- Notifications for goals, levels, badges, created petitions, and daily challenge milestones
-- Discover search with category filters and trending/urgent/newest sorting
-- Saved petitions view for bookmarked petitions
-- Activity tab with contribution calendar, badges, recent signatures, signed count, created count, and level progress
-- Profile with email, address, location, name, signature pad, interests, profile picture, and sign out
-- Security & Privacy screen with Firebase phone-number verification for 2FA, biometric toggle, session status, and data protection notes
+```bash
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+ENCRYPTION_KEY=
+
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=google/gemini-2.5-flash
+OPENROUTER_SITE_URL=http://localhost:8081
+OPENROUTER_APP_NAME=Swipe4Change
+
+REPORT_EMAIL_TO=
+REPORT_EMAIL_FROM=
+RESEND_API_KEY=
+
+CORS_ORIGIN=*
+```
+
+Do not commit `.env` to GitHub. Keep API keys and service role keys private.
+
+## Firebase Setup
+
+1. Create a Firebase project.
+2. Enable Authentication.
+3. Enable Email/Password sign-in.
+4. Enable Phone authentication if you want phone verification and 2FA.
+5. Enable SMS-based multi-factor authentication if using Firebase MFA.
+6. Add `localhost` and your deployed domain to Firebase Authentication authorized domains.
+7. Copy the Firebase web app config into the Expo environment variables.
 
 ## Supabase Setup
 
 1. Create a Supabase project.
-2. Run `backend/schema.sql` in the Supabase SQL Editor.
-3. Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` for the app.
-4. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to Render for server-side writes.
+2. Open the Supabase SQL Editor.
+3. Run the SQL in `backend/schema.sql`.
+4. Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` for the frontend.
+5. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` for the backend.
 
-The schema enables RLS. Public clients can read visible petitions and submit pending petitions; user, signature, saved, and notification writes are intended to go through the Render API with the service role key.
+The schema enables Row Level Security. The frontend can read visible petitions, while sensitive writes are intended to go through the backend using the Supabase service role key.
 
-## Firebase Auth Setup
+## OpenRouter AI Setup
 
-1. Create a Firebase project.
-2. Enable Email/Password authentication.
-3. Enable Phone authentication.
-4. Enable SMS-based multi-factor authentication in Firebase Authentication settings.
-5. Add your local and deployed web domains to Firebase Authentication authorized domains.
-6. Add a web app and copy its config values into the Expo env variables.
+The AI petition draft generator uses OpenRouter through the backend.
 
-Phone 2FA uses Firebase's web reCAPTCHA verifier. It works in the web build, including Firebase Hosting or a local `localhost` run, after the domain is authorized in Firebase.
-
-## Render API Deployment
-
-The included `render.yaml` deploys `backend/` as a web service.
-
-Manual settings:
-
-- Root directory: `backend`
-- Build command: `npm install`
-- Start command: `npm start`
-- Health check path: `/health`
-
-After deployment, set `EXPO_PUBLIC_API_BASE_URL` to the Render service URL.
-
-Run one shared backend service for the website. Do not start a separate backend per user; Express handles many simultaneous users on the same deployed Render URL, while Firebase identifies each browser session and Supabase stores account-specific data by user id.
-
-## AI Draft Setup
-
-Add this to the backend environment, either locally in `backend/.env` tooling or in Render:
+Add these backend variables:
 
 ```bash
-OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_API_KEY=sk-or-v1-...
 OPENROUTER_MODEL=google/gemini-2.5-flash
-OPENROUTER_SITE_URL=https://your-web-app-url
+OPENROUTER_SITE_URL=https://your-deployed-site-url
 OPENROUTER_APP_NAME=Swipe4Change
 ```
 
-The OpenRouter key must stay on the backend. The Expo app calls `/api/ai/petition-draft`; it never receives the key. You can change `OPENROUTER_MODEL` to any OpenRouter model that supports structured outputs.
+The frontend calls:
+
+```text
+POST /api/ai/petition-draft
+```
+
+The API key is never sent to the browser.
 
 ## Report Email Setup
 
-Reports are stored through the backend and can email the admin inbox with Resend:
+Report emails use Resend.
 
 ```bash
-REPORT_EMAIL_TO=jaewonshim0000@gmail.com
+REPORT_EMAIL_TO=your-admin-email@example.com
 REPORT_EMAIL_FROM=Swipe4Change <onboarding@resend.dev>
 RESEND_API_KEY=re_...
 ```
 
-For production, verify your sending domain in Resend and replace `REPORT_EMAIL_FROM` with an address on that domain. Without `RESEND_API_KEY`, reports are still saved, but no email is sent.
+For production, verify a sending domain in Resend and use an email address on that domain. If `RESEND_API_KEY` is missing, reports are still saved, but email alerts are not sent.
+
+## Backend API
+
+The Express API includes:
+
+```text
+GET  /health
+GET  /api/petitions
+GET  /api/petitions/:id
+POST /api/petitions
+POST /api/sign
+POST /api/save
+POST /api/report
+POST /api/user
+GET  /api/user/:firebaseUid
+GET  /api/user/:firebaseUid/signatures
+GET  /api/user/:firebaseUid/saved
+GET  /api/user/:firebaseUid/notifications
+POST /api/ai/petition-draft
+```
+
+## Build For Web
+
+Create a production web export:
+
+```bash
+npm run build:web
+```
+
+The static output is generated in:
+
+```text
+dist/
+```
 
 ## Firebase Hosting Deployment
+
+Build and deploy:
+
+```bash
+npm run deploy:firebase
+```
+
+Or run the steps manually:
 
 ```bash
 npm run build:web
 firebase deploy
 ```
 
-`firebase.json` serves the generated `dist/` directory and rewrites routes to `index.html`.
+`firebase.json` serves the `dist/` folder and rewrites routes to `index.html`.
 
-## Verification
+## Render Backend Deployment
+
+The repo includes `render.yaml`.
+
+Manual Render settings:
+
+- Root directory: `backend`
+- Build command: `npm install`
+- Start command: `npm start`
+- Health check path: `/health`
+
+After deploying the backend, set the frontend variable:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=https://your-render-service.onrender.com
+```
+
+Run one shared backend service for the deployed website. Do not start one backend per user. Express handles simultaneous requests, Firebase identifies the browser session, and Supabase stores account-specific data by user id.
+
+## Testing And Verification
 
 Useful checks:
 
@@ -158,154 +486,85 @@ npx expo install --check
 npm run build:web
 node --check backend/server.js
 ```
-=======
-# Swipe4Change — Full MVP
 
-A Tinder-style civic engagement app. Swipe to sign petitions, create your own, track impact.
-
-**Stack:** Expo SDK 54 · React Native 0.81 · React 19.1 · Firebase Auth · Supabase DB · Render API
-
----
-
-## Quick Start
+Check the backend health endpoint:
 
 ```bash
-cd swipe4change
-npm install
-npx expo install --fix
-npx expo start --tunnel --clear
+curl http://localhost:3001/health
 ```
 
-Scan the QR code with Expo Go on your phone.
+Expected response:
 
----
-
-## Deployment
-
-### Firebase (Authentication)
-1. Create project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable Authentication → Email/Password
-3. Copy config into `src/config/firebase.js`
-
-### Supabase (Database + Storage)
-1. Create project at [supabase.com](https://supabase.com)
-2. Run `backend/schema.sql` in SQL Editor
-3. Copy URL + anon key into `src/config/supabase.js`
-
-### Render (Backend API)
-1. Create Web Service at [render.com](https://render.com)
-2. Point to the `backend/` folder
-3. Build: `npm install` · Start: `node server.js`
-
-### Vercel (Admin Dashboard — optional)
-For a future web admin panel to moderate petitions.
-
----
-
-## Project Structure
-
-```
-swipe4change/
-├── App.js
-├── package.json
-├── src/
-│   ├── config/
-│   │   ├── firebase.js          ← Firebase auth config
-│   │   └── supabase.js          ← Supabase client config
-│   ├── navigation/
-│   │   └── AppNavigator.js      ← tabs + stack + auth gate
-│   ├── screens/
-│   │   ├── AuthScreen.js        ← login / signup
-│   │   ├── SwipeFeedScreen.js   ← personalized swipe feed
-│   │   ├── DiscoverScreen.js    ← search + filter directory
-│   │   ├── CreatePetitionScreen.js ← 7-step wizard
-│   │   ├── PetitionDetailScreen.js ← full detail view
-│   │   ├── SavedPetitionsScreen.js ← bookmarked petitions
-│   │   ├── ActivityGamificationScreen.js ← calendar + badges + level
-│   │   ├── ProfileScreen.js     ← full profile + signature
-│   │   ├── NotificationsScreen.js ← notification feed
-│   │   └── SecurityScreen.js    ← 2FA + encryption
-│   ├── components/
-│   │   ├── PetitionCard.js
-│   │   ├── SwipeDeck.js         ← PanResponder swipe
-│   │   ├── SignModal.js         ← sign with consent + signature
-│   │   ├── SignaturePad.js      ← SVG drawing pad
-│   │   ├── ActionButtons.js
-│   │   ├── PetitionListItem.js
-│   │   ├── LevelProgress.js
-│   │   ├── ContributionCalendar.js ← GitHub-style heatmap
-│   │   ├── BadgeCard.js         ← badge display
-│   │   ├── NotificationCard.js  ← structured notification
-│   │   └── AppHeader.js         ← brand header + bell
-│   ├── contexts/
-│   │   └── AppContext.js        ← all app state
-│   ├── data/
-│   │   └── petitions.js         ← seed data + badges
-│   ├── theme/
-│   │   └── index.js             ← design tokens
-│   └── utils/
-│       └── helpers.js
-├── backend/
-│   ├── server.js                ← Express API for Render
-│   ├── schema.sql               ← Supabase tables
-│   └── package.json
-└── README.md
+```json
+{
+  "status": "healthy",
+  "database": "memory"
+}
 ```
 
----
+If Supabase is configured, the database value should show `supabase`.
 
-## Feature Checklist
+## Troubleshooting
 
-| # | Feature | Status |
-|---|---------|--------|
-| 0 | Authentication (Firebase) | ✅ |
-| 1 | Swiping (personalized by interests) | ✅ |
-| 1.1 | Daily challenge tracker | ✅ |
-| 2 | Create Petition (7-step wizard) | ✅ |
-| 2.1 | Name, category, location | ✅ |
-| 2.2 | Situation + ask + tags | ✅ |
-| 2.3 | Urgency tag selector | ✅ |
-| 2.4 | Recipient + goal | ✅ |
-| 2.5 | Preview card + T&C | ✅ |
-| 3 | Petition Detail Card | ✅ |
-| 3.1 | Image, category, location, proposer | ✅ |
-| 3.2 | Signed count + weekly increase | ✅ |
-| 3.3 | Urgency badge + progress bar | ✅ |
-| 3.4 | Situation + ask + recipient | ✅ |
-| 3.5 | Bookmark + sign buttons | ✅ |
-| 4 | Sign Petition | ✅ |
-| 4.1 | Auto-loaded profile info | ✅ |
-| 4.2 | Signature from profile | ✅ |
-| 4.3 | Comment + consent | ✅ |
-| 5 | Notifications | ✅ |
-| 5.1 | Level up, goal reached, badge | ✅ |
-| 5.2 | Petition support, created | ✅ |
-| 5.3 | Structured detail cards | ✅ |
-| 6 | Discover | ✅ |
-| 6.1 | Search bar | ✅ |
-| 6.2 | Category filter chips | ✅ |
-| 6.3 | Sort: trending/urgent/newest | ✅ |
-| 7 | Saved (bookmarked only) | ✅ |
-| 8 | Activity | ✅ |
-| 8.1 | Contribution calendar (30 days) | ✅ |
-| 8.2 | 10 badges system | ✅ |
-| 8.3 | Petition sign count | ✅ |
-| 8.4 | Recent signatures list | ✅ |
-| 8.5 | Level progress (1-5) | ✅ |
-| 9 | Profile | ✅ |
-| 9.1 | First/last name, email, address | ✅ |
-| 9.2 | Signature pad (SVG drawing) | ✅ |
-| 9.3 | Interests selector | ✅ |
-| 9.4 | Profile picture (image picker) | ✅ |
-| 10 | Security & Privacy | ✅ |
-| 10.1 | 2FA toggle | ✅ |
-| 10.2 | Encryption info display | ✅ |
-| 10.3 | Biometric toggle | ✅ |
-| 10.4 | Session management | ✅ |
+### `EADDRINUSE: address already in use :::3001`
 
----
+The backend is already running on port `3001`.
+
+Stop the old backend process, or run the API on a different port:
+
+```bash
+PORT=3002 npm run dev
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:PORT=3002
+npm run dev
+```
+
+### App Cannot Connect To Server
+
+Make sure:
+
+- The backend is running.
+- `EXPO_PUBLIC_API_BASE_URL` points to the backend URL.
+- The frontend was restarted after changing `.env`.
+- Render allows requests from the deployed frontend domain through `CORS_ORIGIN`.
+
+### AI Draft Says Missing Authentication Header
+
+This usually means the OpenRouter API key is missing, malformed, or being sent to the wrong endpoint.
+
+Make sure the key is configured only on the backend:
+
+```bash
+OPENROUTER_API_KEY=sk-or-v1-...
+```
+
+### Phone 2FA Does Not Send Code
+
+Make sure:
+
+- Firebase Phone Auth is enabled.
+- Firebase SMS multi-factor authentication is enabled.
+- The current domain is listed in Firebase authorized domains.
+- You are testing in the web build.
+
+### Multiple Tabs Log Into The Same Account
+
+This is normal browser behavior. Firebase shares auth state across tabs in the same browser profile. To test multiple users on one computer, use:
+
+- A normal browser window and an incognito/private window.
+- Two different browsers.
+- Separate Chrome profiles.
+
+## Current Status
+
+Swipe4Change is a full MVP. It supports local development, web export, backend deployment, database persistence, AI drafting, report handling, and Firebase authentication.
+
+For production use, configure Firebase, Supabase, Render, OpenRouter, and Resend with real deployed environment variables.
 
 ## License
 
 MIT
->>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
