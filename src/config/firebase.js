@@ -17,12 +17,12 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: "AIzaSyAPI6G1W4qqoFOWAkxKTzKV1oaB0nXqoyM",
+  authDomain: "project-e85c9709-7b5b-43-babf2.firebaseapp.com",
+  projectId: "project-e85c9709-7b5b-43-babf2",
+  storageBucket: "project-e85c9709-7b5b-43-babf2.firebasestorage.app",
+  messagingSenderId: "875748736147",
+  appId: "1:875748736147:web:91468f60a9b7bce22ca166",
 };
 
 // Prevent re-initialization in dev hot-reload
