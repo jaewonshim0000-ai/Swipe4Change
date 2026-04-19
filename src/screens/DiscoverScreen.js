@@ -7,6 +7,7 @@ import { PETITION_CATEGORIES } from '../data/petitions';
 import { useApp } from '../contexts/AppContext';
 import AppHeader from '../components/AppHeader';
 import PetitionListItem from '../components/PetitionListItem';
+<<<<<<< HEAD
 import ReportModal from '../components/ReportModal';
 
 const URGENCY_RANK = { low: 1, medium: 2, high: 3, critical: 4 };
@@ -17,6 +18,14 @@ export default function DiscoverScreen({ navigation }) {
   const [selectedCat, setSelectedCat] = useState(null);
   const [sortBy, setSortBy] = useState('trending'); // trending | newest | urgent
   const [pendingReport, setPendingReport] = useState(null);
+=======
+
+export default function DiscoverScreen({ navigation }) {
+  const { petitions } = useApp();
+  const [query, setQuery] = useState('');
+  const [selectedCat, setSelectedCat] = useState(null);
+  const [sortBy, setSortBy] = useState('trending'); // trending | newest | urgent
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 
   const filtered = useMemo(() => {
     let result = [...petitions];
@@ -29,8 +38,11 @@ export default function DiscoverScreen({ navigation }) {
           p.title.toLowerCase().includes(q) ||
           p.summary.toLowerCase().includes(q) ||
           p.organization.toLowerCase().includes(q) ||
+<<<<<<< HEAD
           p.location.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q) ||
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           (p.tags && p.tags.some((t) => t.includes(q)))
       );
     }
@@ -49,7 +61,11 @@ export default function DiscoverScreen({ navigation }) {
         result.sort((a, b) => a.daysLeft - b.daysLeft); // shorter daysLeft = newer deadline
         break;
       case 'urgent':
+<<<<<<< HEAD
         result.sort((a, b) => (URGENCY_RANK[b.urgency] || 0) - (URGENCY_RANK[a.urgency] || 0));
+=======
+        result.sort((a, b) => b.urgency - a.urgency);
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
         break;
     }
 
@@ -149,7 +165,10 @@ export default function DiscoverScreen({ navigation }) {
               petition={p}
               meta={`${p.organization} · ${p.location}`}
               onPress={() => navigation.navigate('PetitionDetail', { petitionId: p.id })}
+<<<<<<< HEAD
               onReport={(petition) => setPendingReport(petition)}
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
               rightIcon={
                 p.verified ? (
                   <MaterialIcons name="verified" size={16} color={COLORS.tertiary} style={{ alignSelf: 'center' }} />
@@ -159,12 +178,15 @@ export default function DiscoverScreen({ navigation }) {
           ))
         )}
       </ScrollView>
+<<<<<<< HEAD
       <ReportModal
         visible={!!pendingReport}
         petition={pendingReport}
         onClose={() => setPendingReport(null)}
         onSubmit={(payload) => reportPetition(pendingReport.id, payload)}
       />
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     </SafeAreaView>
   );
 }

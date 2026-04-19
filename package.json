@@ -6,6 +6,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
+<<<<<<< HEAD
     "web": "expo start --web",
     "build:web": "expo export --platform web --output-dir dist",
     "deploy:firebase": "npm run build:web && firebase deploy"
@@ -36,6 +37,34 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "babel-preset-expo": "~54.0.10"
+=======
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "expo": "~54.0.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "expo-status-bar": "~2.2.0",
+    "expo-linear-gradient": "~14.0.0",
+    "expo-haptics": "~14.0.0",
+    "expo-image-picker": "~16.0.0",
+    "expo-crypto": "~14.0.0",
+    "@expo/vector-icons": "^14.0.4",
+    "@react-navigation/native": "^7.0.0",
+    "@react-navigation/bottom-tabs": "^7.0.0",
+    "@react-navigation/native-stack": "^7.0.0",
+    "react-native-safe-area-context": "~5.4.0",
+    "react-native-screens": "~4.10.0",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-svg": "~15.11.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "firebase": "^11.0.0",
+    "@react-native-async-storage/async-storage": "2.1.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "babel-preset-expo": "~12.0.0"
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   },
   "private": true
 }

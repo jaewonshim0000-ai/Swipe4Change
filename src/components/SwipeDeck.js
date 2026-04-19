@@ -14,7 +14,10 @@ export default function SwipeDeck({
   onSwipeRight,
   onSwipeLeft,
   onTap,
+<<<<<<< HEAD
   onReport,
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   onReset,
 }) {
   const position = useRef(new Animated.ValueXY()).current;
@@ -129,7 +132,11 @@ export default function SwipeDeck({
                 // Only fire tap if not currently dragging
                 delayPressIn={120}
               >
+<<<<<<< HEAD
                 <PetitionCard petition={item} dragX={dragX} onReport={onReport} />
+=======
+                <PetitionCard petition={item} dragX={dragX} />
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
               </TouchableOpacity>
             </Animated.View>
           );

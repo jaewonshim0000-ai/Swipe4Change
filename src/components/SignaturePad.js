@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useEffect, useRef, useState } from 'react';
+=======
+import React, { useState, useRef } from 'react';
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 import { View, PanResponder, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -7,6 +11,7 @@ import { COLORS } from '../theme';
 export default function SignaturePad({ onSave, initialPath, height = 160 }) {
   const [paths, setPaths] = useState(initialPath ? [initialPath] : []);
   const [currentPath, setCurrentPath] = useState('');
+<<<<<<< HEAD
   const pathsRef = useRef(initialPath ? [initialPath] : []);
   const currentPathRef = useRef('');
 
@@ -17,6 +22,8 @@ export default function SignaturePad({ onSave, initialPath, height = 160 }) {
     setPaths(next);
     setCurrentPath('');
   }, [initialPath]);
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 
   const panResponder = useRef(
     PanResponder.create({
@@ -24,6 +31,7 @@ export default function SignaturePad({ onSave, initialPath, height = 160 }) {
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (e) => {
         const { locationX, locationY } = e.nativeEvent;
+<<<<<<< HEAD
         const next = `M${locationX.toFixed(1)},${locationY.toFixed(1)}`;
         currentPathRef.current = next;
         setCurrentPath(next);
@@ -39,6 +47,17 @@ export default function SignaturePad({ onSave, initialPath, height = 160 }) {
           const all = [...pathsRef.current, currentPathRef.current];
           pathsRef.current = all;
           currentPathRef.current = '';
+=======
+        setCurrentPath(`M${locationX.toFixed(1)},${locationY.toFixed(1)}`);
+      },
+      onPanResponderMove: (e) => {
+        const { locationX, locationY } = e.nativeEvent;
+        setCurrentPath((p) => `${p} L${locationX.toFixed(1)},${locationY.toFixed(1)}`);
+      },
+      onPanResponderRelease: () => {
+        if (currentPath) {
+          const all = [...paths, currentPath];
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           setPaths(all);
           setCurrentPath('');
           if (onSave) onSave(all.join(' '));
@@ -48,8 +67,11 @@ export default function SignaturePad({ onSave, initialPath, height = 160 }) {
   ).current;
 
   const clear = () => {
+<<<<<<< HEAD
     pathsRef.current = [];
     currentPathRef.current = '';
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     setPaths([]);
     setCurrentPath('');
     if (onSave) onSave(null);

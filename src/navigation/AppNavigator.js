@@ -66,7 +66,10 @@ function TabNavigator({ navigation }) {
         listeners={{ tabPress: (e) => { e.preventDefault(); navigation.navigate('CreatePetition'); } }}
       />
       <Tab.Screen name="SavedTab" component={SavedPetitionsScreen} options={{ tabBarLabel: 'Saved', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'bookmark' : 'bookmark-border'} focused={focused} badge={savedIds.length} /> }} />
+<<<<<<< HEAD
       <Tab.Screen name="ActivityTab" component={ActivityGamificationScreen} options={{ tabBarLabel: 'Activity', tabBarIcon: ({ focused }) => <TabIcon name="insights" focused={focused} badge={signedIds.length} /> }} />
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ tabBarLabel: 'Profile', tabBarIcon: ({ focused }) => <TabIcon name="account-circle" focused={focused} /> }} />
     </Tab.Navigator>
   );

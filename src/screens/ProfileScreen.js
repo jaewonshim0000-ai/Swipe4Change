@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
+=======
+import React, { useState } from 'react';
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,11 +23,15 @@ export default function ProfileScreen({ navigation }) {
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
+<<<<<<< HEAD
     location: user.location || '',
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     address: user.address || '',
   });
   const upd = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+<<<<<<< HEAD
   useEffect(() => {
     if (editing) return;
     setForm({
@@ -35,6 +43,8 @@ export default function ProfileScreen({ navigation }) {
     });
   }, [editing, user.address, user.email, user.firstName, user.lastName, user.location]);
 
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -48,6 +58,7 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const saveProfile = () => {
+<<<<<<< HEAD
     updateUser({
       firstName: form.firstName,
       lastName: form.lastName,
@@ -55,6 +66,9 @@ export default function ProfileScreen({ navigation }) {
       location: form.location,
       address: form.address,
     });
+=======
+    updateUser({ firstName: form.firstName, lastName: form.lastName, email: form.email, address: form.address });
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     setEditing(false);
   };
 
@@ -94,7 +108,11 @@ export default function ProfileScreen({ navigation }) {
           <Text style={s.name}>{user.firstName} {user.lastName}</Text>
           <View style={[s.levelBadge, { backgroundColor: level.color + '15', borderColor: level.color + '40' }]}>
             <MaterialCommunityIcons name="medal" size={12} color={level.color} />
+<<<<<<< HEAD
             <Text style={[s.levelText, { color: level.color }]}>{level.name.toUpperCase()} - LV {level.level}</Text>
+=======
+            <Text style={[s.levelText, { color: level.color }]}>{level.name.toUpperCase()} · LV {level.level}</Text>
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           </View>
         </View>
 
@@ -104,7 +122,10 @@ export default function ProfileScreen({ navigation }) {
           <FieldRow label="First Name" value={form.firstName} onChange={(v) => upd('firstName', v)} editable={editing} />
           <FieldRow label="Last Name" value={form.lastName} onChange={(v) => upd('lastName', v)} editable={editing} />
           <FieldRow label="Email" value={form.email} onChange={(v) => upd('email', v)} editable={editing} keyboardType="email-address" />
+<<<<<<< HEAD
           <FieldRow label="Location" value={form.location} onChange={(v) => upd('location', v)} editable={editing} />
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           <FieldRow label="Address" value={form.address} onChange={(v) => upd('address', v)} editable={editing} last />
         </View>
 
@@ -143,7 +164,11 @@ export default function ProfileScreen({ navigation }) {
         {/* Settings */}
         <Text style={s.sectionLabel}>SETTINGS</Text>
         <SettingBtn icon="shield" label="Security & Privacy" onPress={() => navigation.navigate('Security')} />
+<<<<<<< HEAD
         <SettingBtn icon="notifications-none" label="Notifications" onPress={() => navigation.navigate('Notifications')} />
+=======
+        <SettingBtn icon="notifications-none" label="Notifications" />
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
         <SettingBtn icon="help-outline" label="Help & Feedback" />
         <SettingBtn icon="logout" label="Sign Out" danger onPress={logout} />
       </ScrollView>
@@ -157,7 +182,11 @@ const FieldRow = ({ label, value, onChange, editable, keyboardType, last }) => (
     {editable ? (
       <TextInput style={fieldS.input} value={value} onChangeText={onChange} keyboardType={keyboardType} />
     ) : (
+<<<<<<< HEAD
       <Text style={fieldS.value} numberOfLines={1}>{value || '-'}</Text>
+=======
+      <Text style={fieldS.value} numberOfLines={1}>{value || '—'}</Text>
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     )}
   </View>
 );

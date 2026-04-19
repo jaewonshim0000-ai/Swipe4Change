@@ -5,7 +5,11 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { CATEGORY_STYLE, COLORS } from '../theme';
 import { fmtNumber } from '../utils/helpers';
 
+<<<<<<< HEAD
 export default function PetitionListItem({ petition, onPress, meta, rightIcon, onReport }) {
+=======
+export default function PetitionListItem({ petition, onPress, meta, rightIcon }) {
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const cat = CATEGORY_STYLE[petition.category] || CATEGORY_STYLE.Climate;
   const pct = Math.min(100, (petition.signed / petition.goal) * 100);
 
@@ -32,6 +36,7 @@ export default function PetitionListItem({ petition, onPress, meta, rightIcon, o
           </View>
           <Text style={styles.progressText}>{fmtNumber(petition.signed)}</Text>
         </View>
+<<<<<<< HEAD
         {onReport && (
           <TouchableOpacity
             style={styles.reportRow}
@@ -45,6 +50,8 @@ export default function PetitionListItem({ petition, onPress, meta, rightIcon, o
             <Text style={styles.reportText}>Report false or malicious petition</Text>
           </TouchableOpacity>
         )}
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
       </View>
 
       {rightIcon && <View style={styles.rightSlot}>{rightIcon}</View>}
@@ -79,7 +86,10 @@ const styles = StyleSheet.create({
   },
   progressBarFill: { height: '100%', borderRadius: 2 },
   progressText: { color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '700' },
+<<<<<<< HEAD
   reportRow: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: 8 },
   reportText: { color: COLORS.error, fontSize: 11, fontWeight: '700' },
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   rightSlot: { alignSelf: 'center' },
 });

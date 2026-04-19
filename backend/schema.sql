@@ -1,8 +1,11 @@
 -- Swipe4Change — Supabase Schema
 -- Run this in the Supabase SQL Editor to create all tables
 
+<<<<<<< HEAD
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 -- Users
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -18,21 +21,27 @@ CREATE TABLE IF NOT EXISTS users (
   level INTEGER DEFAULT 1,
   signature_count INTEGER DEFAULT 0,
   two_factor_enabled BOOLEAN DEFAULT FALSE,
+<<<<<<< HEAD
   two_factor_method TEXT,
   phone_number TEXT,
   phone_verified BOOLEAN DEFAULT FALSE,
   phone_verified_at TIMESTAMPTZ,
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   push_token TEXT,
   notification_settings JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+<<<<<<< HEAD
 ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_method TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified_at TIMESTAMPTZ;
 
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 -- Petitions
 CREATE TABLE IF NOT EXISTS petitions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -94,21 +103,31 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- Reports
 CREATE TABLE IF NOT EXISTS reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+<<<<<<< HEAD
   reporter_id UUID REFERENCES users(id),
   reporter_email TEXT,
   reported_item_type TEXT NOT NULL,
   reported_item_id TEXT NOT NULL,
   reason TEXT NOT NULL,
   details TEXT,
+=======
+  reporter_id UUID NOT NULL REFERENCES users(id),
+  reported_item_type TEXT NOT NULL,
+  reported_item_id UUID NOT NULL,
+  reason TEXT NOT NULL,
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   status TEXT DEFAULT 'pending',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+<<<<<<< HEAD
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS reporter_email TEXT;
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS details TEXT;
 ALTER TABLE reports ALTER COLUMN reporter_id DROP NOT NULL;
 ALTER TABLE reports ALTER COLUMN reported_item_id TYPE TEXT USING reported_item_id::TEXT;
 
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_petitions_category ON petitions(category);
 CREATE INDEX IF NOT EXISTS idx_petitions_status ON petitions(status);
@@ -123,6 +142,7 @@ ALTER TABLE petitions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE signatures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_petitions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+<<<<<<< HEAD
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 
 -- Public app reads. Writes should go through the Render API using SUPABASE_SERVICE_ROLE_KEY.
@@ -165,3 +185,5 @@ CREATE POLICY "Reports are service only"
   ON reports FOR ALL
   USING (false)
   WITH CHECK (false);
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe

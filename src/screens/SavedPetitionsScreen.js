@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
+=======
+import React from 'react';
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -6,11 +10,17 @@ import { COLORS } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import AppHeader from '../components/AppHeader';
 import PetitionListItem from '../components/PetitionListItem';
+<<<<<<< HEAD
 import ReportModal from '../components/ReportModal';
 
 export default function SavedPetitionsScreen({ navigation }) {
   const { savedIds, getPetitionById, reportPetition } = useApp();
   const [pendingReport, setPendingReport] = useState(null);
+=======
+
+export default function SavedPetitionsScreen({ navigation }) {
+  const { savedIds, getPetitionById } = useApp();
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const items = savedIds.map(getPetitionById).filter(Boolean);
 
   return (
@@ -45,17 +55,23 @@ export default function SavedPetitionsScreen({ navigation }) {
               petition={p}
               meta={`${p.organization} · ${p.daysLeft}d left`}
               onPress={() => navigation.navigate('PetitionDetail', { petitionId: p.id })}
+<<<<<<< HEAD
               onReport={(petition) => setPendingReport(petition)}
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
             />
           ))
         )}
       </ScrollView>
+<<<<<<< HEAD
       <ReportModal
         visible={!!pendingReport}
         petition={pendingReport}
         onClose={() => setPendingReport(null)}
         onSubmit={(payload) => reportPetition(pendingReport.id, payload)}
       />
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     </SafeAreaView>
   );
 }

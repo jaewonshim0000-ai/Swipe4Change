@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
+=======
+import React from 'react';
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,11 +14,17 @@ import LevelProgress from '../components/LevelProgress';
 import ContributionCalendar from '../components/ContributionCalendar';
 import BadgeCard from '../components/BadgeCard';
 import PetitionListItem from '../components/PetitionListItem';
+<<<<<<< HEAD
 import ReportModal from '../components/ReportModal';
 
 export default function ActivityGamificationScreen({ navigation }) {
   const { signedIds, getPetitionById, contributions, earnedBadges, createdPetitions, reportPetition } = useApp();
   const [pendingReport, setPendingReport] = useState(null);
+=======
+
+export default function ActivityGamificationScreen({ navigation }) {
+  const { signedIds, getPetitionById, contributions, earnedBadges, createdPetitions } = useApp();
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const items = signedIds.map(getPetitionById).filter(Boolean);
   const uniqueCats = new Set(items.map((i) => i.category)).size;
 
@@ -68,7 +78,10 @@ export default function ActivityGamificationScreen({ navigation }) {
                 petition={p}
                 meta={`Signed · ${p.organization}`}
                 onPress={() => navigation.navigate('PetitionDetail', { petitionId: p.id })}
+<<<<<<< HEAD
                 onReport={(petition) => setPendingReport(petition)}
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
                 rightIcon={
                   <View style={s.signedDot}>
                     <MaterialIcons name="check" size={14} color={COLORS.tertiary} />
@@ -79,12 +92,15 @@ export default function ActivityGamificationScreen({ navigation }) {
           </View>
         )}
       </ScrollView>
+<<<<<<< HEAD
       <ReportModal
         visible={!!pendingReport}
         petition={pendingReport}
         onClose={() => setPendingReport(null)}
         onSubmit={(payload) => reportPetition(pendingReport.id, payload)}
       />
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     </SafeAreaView>
   );
 }

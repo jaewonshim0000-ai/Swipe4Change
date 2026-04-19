@@ -136,6 +136,7 @@ export const URGENCY_LEVELS = [
   { key: 'critical', label: 'Critical', color: '#ef4444' },
 ];
 
+<<<<<<< HEAD
 export const PETITION_TAG_OPTIONS = {
   Climate: ['clean-energy', 'emissions', 'public-lands', 'climate-justice', 'transit', 'resilience'],
   'Human Rights': ['justice', 'equity', 'civil-rights', 'youth', 'workers', 'safety'],
@@ -149,6 +150,8 @@ export const PETITION_TAG_OPTIONS = {
 
 export const ALL_PETITION_TAGS = Array.from(new Set(Object.values(PETITION_TAG_OPTIONS).flat())).sort();
 
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 export const BADGES = [
   { id: 'b1', name: 'First Sign',       icon: 'pencil-outline',       desc: 'Signed your first petition',           threshold: 1, type: 'signs' },
   { id: 'b2', name: 'Engaged Citizen',  icon: 'account-check',        desc: 'Signed 10 petitions',                  threshold: 10, type: 'signs' },

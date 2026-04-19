@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -53,11 +54,20 @@ const resetPhoneRecaptchaVerifier = () => {
   }
   window.swipe4changePhone2FARecaptcha = null;
 };
+=======
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Switch, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS } from '../theme';
+import { useApp } from '../contexts/AppContext';
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 
 export default function SecurityScreen({ navigation }) {
   const { user, updateUser } = useApp();
   const [twoFA, setTwoFA] = useState(user.twoFactorEnabled || false);
   const [biometric, setBiometric] = useState(false);
+<<<<<<< HEAD
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || '');
   const [pendingPhoneNumber, setPendingPhoneNumber] = useState('');
   const [verificationId, setVerificationId] = useState('');
@@ -185,18 +195,31 @@ export default function SecurityScreen({ navigation }) {
       Alert.alert(
         'Enable 2FA',
         'A verification code will be sent to your verified phone when Firebase asks for a second factor.',
+=======
+
+  const toggle2FA = (val) => {
+    if (val) {
+      Alert.alert(
+        'Enable 2FA',
+        'A verification code will be sent to your email each time you sign in from a new device.',
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
         [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Enable',
             onPress: () => {
               setTwoFA(true);
+<<<<<<< HEAD
               updateUser({ twoFactorEnabled: true, twoFactorMethod: 'phone' });
+=======
+              updateUser({ twoFactorEnabled: true });
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
             },
           },
         ]
       );
     } else {
+<<<<<<< HEAD
       Alert.alert(
         'Turn off 2FA?',
         'Your phone will no longer be required as a second factor for this account.',
@@ -205,6 +228,10 @@ export default function SecurityScreen({ navigation }) {
           { text: 'Turn off', style: 'destructive', onPress: disablePhone2FA },
         ]
       );
+=======
+      setTwoFA(false);
+      updateUser({ twoFactorEnabled: false });
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     }
   };
 
@@ -239,9 +266,13 @@ export default function SecurityScreen({ navigation }) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.settingTitle}>Two-Factor Authentication</Text>
+<<<<<<< HEAD
               <Text style={styles.settingDesc}>
                 {phoneVerified ? `Phone verified: ${user.phoneNumber}` : 'Verify a phone number before enabling 2FA'}
               </Text>
+=======
+              <Text style={styles.settingDesc}>Verify via email code on new devices</Text>
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
             </View>
           </View>
           <Switch
@@ -252,6 +283,7 @@ export default function SecurityScreen({ navigation }) {
           />
         </View>
 
+<<<<<<< HEAD
         <View style={styles.phoneCard}>
           <View style={styles.phoneHeader}>
             <View style={[styles.settingIcon, { backgroundColor: 'rgba(78,222,163,0.1)' }]}>
@@ -328,6 +360,8 @@ export default function SecurityScreen({ navigation }) {
           {Platform.OS === 'web' ? <View nativeID={PHONE_RECAPTCHA_ID} /> : null}
         </View>
 
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>
             <View style={[styles.settingIcon, { backgroundColor: 'rgba(177,197,255,0.1)' }]}>
@@ -432,6 +466,7 @@ const styles = StyleSheet.create({
   settingTitle: { color: 'white', fontSize: 14, fontWeight: '700' },
   settingDesc: { color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 2 },
 
+<<<<<<< HEAD
   phoneCard: {
     backgroundColor: COLORS.surfaceContainer,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
@@ -465,6 +500,8 @@ const styles = StyleSheet.create({
   phoneBtnText: { color: COLORS.onTertiary, fontSize: 12, fontWeight: '900' },
   phoneBtnSecondaryText: { color: 'white' },
 
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   infoRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
     backgroundColor: COLORS.surfaceContainer,

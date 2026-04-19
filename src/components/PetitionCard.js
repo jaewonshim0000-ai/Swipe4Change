@@ -1,5 +1,9 @@
 import React from 'react';
+<<<<<<< HEAD
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+=======
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS, CATEGORY_STYLE, RADII } from '../theme';
@@ -7,7 +11,11 @@ import { fmtNumber } from '../utils/helpers';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
+<<<<<<< HEAD
 export default function PetitionCard({ petition, dragX = 0, onReport }) {
+=======
+export default function PetitionCard({ petition, dragX = 0 }) {
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const cat = CATEGORY_STYLE[petition.category] || CATEGORY_STYLE.Climate;
   const signedPct = Math.min(100, (petition.signed / petition.goal) * 100);
 
@@ -101,6 +109,7 @@ export default function PetitionCard({ petition, dragX = 0, onReport }) {
             </View>
           </View>
 
+<<<<<<< HEAD
           <View style={styles.cardFooter}>
             <View style={styles.tapHint}>
               <MaterialIcons name="info-outline" size={11} color="rgba(255,255,255,0.4)" />
@@ -119,6 +128,11 @@ export default function PetitionCard({ petition, dragX = 0, onReport }) {
                 <Text style={styles.reportText}>Report</Text>
               </TouchableOpacity>
             )}
+=======
+          <View style={styles.tapHint}>
+            <MaterialIcons name="info-outline" size={11} color="rgba(255,255,255,0.4)" />
+            <Text style={styles.tapHintText}>TAP FOR DETAILS</Text>
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           </View>
         </View>
       </LinearGradient>
@@ -197,9 +211,14 @@ const styles = StyleSheet.create({
   progressBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: RADII.full, overflow: 'hidden' },
   progressBarFill: { height: '100%', borderRadius: RADII.full },
 
+<<<<<<< HEAD
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   tapHint: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   tapHintText: { color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700', letterSpacing: 2 },
   reportBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(255,180,171,0.12)', borderWidth: 1, borderColor: 'rgba(255,180,171,0.25)' },
   reportText: { color: COLORS.error, fontSize: 10, fontWeight: '800' },
+=======
+  tapHint: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  tapHintText: { color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700', letterSpacing: 2 },
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 });

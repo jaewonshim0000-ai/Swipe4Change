@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+<<<<<<< HEAD
 import {
   getMultiFactorResolver,
   PhoneAuthProvider,
@@ -47,12 +48,20 @@ const resetLoginRecaptchaVerifier = () => {
 
 export default function AuthScreen() {
   const { login, signup, firebaseEnabled } = useApp();
+=======
+import { COLORS } from '../theme';
+import { useApp } from '../contexts/AppContext';
+
+export default function AuthScreen() {
+  const { login, signup } = useApp();
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const [mode, setMode] = useState('login'); // login | signup
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
+<<<<<<< HEAD
   const [loading, setLoading] = useState(false);
   const [mfaResolver, setMfaResolver] = useState(null);
   const [mfaHint, setMfaHint] = useState(null);
@@ -109,6 +118,10 @@ export default function AuthScreen() {
   };
 
   const handleSubmit = async () => {
+=======
+
+  const handleSubmit = () => {
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     setError('');
     if (!email.includes('@') || !email.includes('.')) {
       setError('Please enter a valid email address.');
@@ -122,6 +135,7 @@ export default function AuthScreen() {
       setError('Please enter your full name.');
       return;
     }
+<<<<<<< HEAD
     try {
       setLoading(true);
       resetMfaState();
@@ -146,6 +160,10 @@ export default function AuthScreen() {
     } finally {
       setLoading(false);
     }
+=======
+    if (mode === 'signup') signup(name.trim(), email.trim(), password);
+    else login(email.trim(), password);
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   };
 
   return (
@@ -181,7 +199,11 @@ export default function AuthScreen() {
             <View style={styles.tabs}>
               <TouchableOpacity
                 style={[styles.tab, mode === 'login' && styles.tabActive]}
+<<<<<<< HEAD
                 onPress={() => { setMode('login'); setError(''); resetMfaState(); }}
+=======
+                onPress={() => { setMode('login'); setError(''); }}
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
               >
                 <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>
                   Sign In
@@ -189,7 +211,11 @@ export default function AuthScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.tab, mode === 'signup' && styles.tabActive]}
+<<<<<<< HEAD
                 onPress={() => { setMode('signup'); setError(''); resetMfaState(); }}
+=======
+                onPress={() => { setMode('signup'); setError(''); }}
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
               >
                 <Text style={[styles.tabText, mode === 'signup' && styles.tabTextActive]}>
                   Create Account
@@ -246,6 +272,7 @@ export default function AuthScreen() {
                 </View>
               ) : null}
 
+<<<<<<< HEAD
               {mfaResolver ? (
                 <View style={styles.mfaBox}>
                   <Text style={styles.mfaTitle}>Phone verification required</Text>
@@ -286,16 +313,24 @@ export default function AuthScreen() {
               ) : null}
 
               <TouchableOpacity onPress={handleSubmit} disabled={loading} activeOpacity={0.9}>
+=======
+              <TouchableOpacity onPress={handleSubmit} activeOpacity={0.9}>
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
                 <LinearGradient
                   colors={[COLORS.tertiary, COLORS.tertiaryContainer]}
                   style={styles.submitBtn}
                 >
                   <Text style={styles.submitText}>
+<<<<<<< HEAD
                     {loading ? 'Working...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+=======
+                    {mode === 'login' ? 'Sign In' : 'Create Account'}
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
                   </Text>
                   <MaterialIcons name="arrow-forward" size={18} color={COLORS.onTertiary} />
                 </LinearGradient>
               </TouchableOpacity>
+<<<<<<< HEAD
 
               {!firebaseEnabled && (
                 <Text style={styles.devMode}>
@@ -304,6 +339,8 @@ export default function AuthScreen() {
               )}
 
               {Platform.OS === 'web' ? <View nativeID={LOGIN_RECAPTCHA_ID} /> : null}
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
             </View>
 
             {/* Divider */}
@@ -375,6 +412,7 @@ const styles = StyleSheet.create({
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 4 },
   errorText: { color: COLORS.error, fontSize: 12, flex: 1 },
 
+<<<<<<< HEAD
   mfaBox: {
     borderWidth: 1, borderColor: 'rgba(78,222,163,0.18)',
     backgroundColor: 'rgba(78,222,163,0.06)',
@@ -394,6 +432,8 @@ const styles = StyleSheet.create({
   mfaButtonText: { color: 'white', fontSize: 12, fontWeight: '800' },
   mfaButtonPrimaryText: { color: COLORS.onTertiary },
 
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   submitBtn: {
     height: 52, borderRadius: 14, flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4,
@@ -401,7 +441,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3, shadowRadius: 16, elevation: 10,
   },
   submitText: { color: COLORS.onTertiary, fontWeight: '900', fontSize: 15 },
+<<<<<<< HEAD
   devMode: { color: 'rgba(255,255,255,0.35)', fontSize: 11, lineHeight: 16, textAlign: 'center' },
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 
   dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
   dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.06)' },

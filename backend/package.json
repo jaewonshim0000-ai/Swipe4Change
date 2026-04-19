@@ -7,9 +7,15 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@supabase/supabase-js": "^2.45.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^4.21.0"
+=======
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "@supabase/supabase-js": "^2.45.0"
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   }
 }

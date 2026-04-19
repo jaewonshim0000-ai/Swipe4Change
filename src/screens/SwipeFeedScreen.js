@@ -7,16 +7,26 @@ import AppHeader from '../components/AppHeader';
 import SwipeDeck from '../components/SwipeDeck';
 import ActionButtons from '../components/ActionButtons';
 import SignModal from '../components/SignModal';
+<<<<<<< HEAD
 import ReportModal from '../components/ReportModal';
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 
 export default function SwipeFeedScreen({ navigation }) {
   const {
     user, petitions, deckIndex, dailyCount, DAILY_GOAL,
+<<<<<<< HEAD
     advanceDeck, signPetition, resetDeck, reportPetition,
   } = useApp();
 
   const [pendingSign, setPendingSign] = useState(null);
   const [pendingReport, setPendingReport] = useState(null);
+=======
+    advanceDeck, signPetition, resetDeck,
+  } = useApp();
+
+  const [pendingSign, setPendingSign] = useState(null);
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleSwipeRight = (petition) => {
@@ -26,8 +36,13 @@ export default function SwipeFeedScreen({ navigation }) {
   const handleSwipeLeft = () => advanceDeck();
   const handleTap = (petition) => navigation.navigate('PetitionDetail', { petitionId: petition.id });
 
+<<<<<<< HEAD
   const handleConfirmSign = (petition, comment) => {
     signPetition(petition.id, { comment });
+=======
+  const handleConfirmSign = (petition) => {
+    signPetition(petition.id);
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     setModalVisible(false);
     setPendingSign(null);
     advanceDeck();
@@ -68,7 +83,10 @@ export default function SwipeFeedScreen({ navigation }) {
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
           onTap={handleTap}
+<<<<<<< HEAD
           onReport={(petition) => setPendingReport(petition)}
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           onReset={resetDeck}
         />
       </View>
@@ -88,12 +106,15 @@ export default function SwipeFeedScreen({ navigation }) {
         onClose={handleCancelSign}
         onConfirm={handleConfirmSign}
       />
+<<<<<<< HEAD
       <ReportModal
         visible={!!pendingReport}
         petition={pendingReport}
         onClose={() => setPendingReport(null)}
         onSubmit={(payload) => reportPetition(pendingReport.id, payload)}
       />
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
     </SafeAreaView>
   );
 }

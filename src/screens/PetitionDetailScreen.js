@@ -9,6 +9,7 @@ import { URGENCY_LEVELS } from '../data/petitions';
 import { useApp } from '../contexts/AppContext';
 import { fmtNumber } from '../utils/helpers';
 import SignModal from '../components/SignModal';
+<<<<<<< HEAD
 import ReportModal from '../components/ReportModal';
 
 export default function PetitionDetailScreen({ route, navigation }) {
@@ -17,6 +18,14 @@ export default function PetitionDetailScreen({ route, navigation }) {
   const petition = getPetitionById(petitionId);
   const [modalVisible, setModalVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
+=======
+
+export default function PetitionDetailScreen({ route, navigation }) {
+  const { petitionId } = route.params;
+  const { user, getPetitionById, signedIds, savedIds, toggleSave, signPetition } = useApp();
+  const petition = getPetitionById(petitionId);
+  const [modalVisible, setModalVisible] = useState(false);
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
 
   if (!petition) return <SafeAreaView style={s.container}><Text style={{ color: 'white', padding: 20 }}>Petition not found</Text></SafeAreaView>;
 
@@ -130,6 +139,7 @@ export default function PetitionDetailScreen({ route, navigation }) {
             </>
           )}
 
+<<<<<<< HEAD
           <TouchableOpacity style={s.reportBox} onPress={() => setReportVisible(true)} activeOpacity={0.85}>
             <MaterialIcons name="flag" size={16} color={COLORS.error} />
             <View style={{ flex: 1 }}>
@@ -138,6 +148,8 @@ export default function PetitionDetailScreen({ route, navigation }) {
             </View>
           </TouchableOpacity>
 
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
           {/* Who it affects */}
           {petition.affects && petition.affects.length > 0 && (
             <>
@@ -187,6 +199,7 @@ export default function PetitionDetailScreen({ route, navigation }) {
 
       <SignModal visible={modalVisible} petition={petition} user={user}
         onClose={() => setModalVisible(false)}
+<<<<<<< HEAD
         onConfirm={(p, comment) => { signPetition(p.id, { comment }); setModalVisible(false); }}
       />
       <ReportModal
@@ -194,6 +207,9 @@ export default function PetitionDetailScreen({ route, navigation }) {
         petition={petition}
         onClose={() => setReportVisible(false)}
         onSubmit={(payload) => reportPetition(petition.id, payload)}
+=======
+        onConfirm={(p) => { signPetition(p.id); setModalVisible(false); }}
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
       />
     </View>
   );
@@ -235,9 +251,12 @@ const s = StyleSheet.create({
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
   tagChip: { backgroundColor: 'rgba(177,197,255,0.1)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   tagChipText: { color: COLORS.primary, fontSize: 11, fontWeight: '700' },
+<<<<<<< HEAD
   reportBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, backgroundColor: 'rgba(255,180,171,0.08)', borderWidth: 1, borderColor: 'rgba(255,180,171,0.2)', borderRadius: 14, padding: 14, marginTop: 18 },
   reportTitle: { color: COLORS.error, fontSize: 13, fontWeight: '900', marginBottom: 2 },
   reportSub: { color: 'rgba(255,255,255,0.52)', fontSize: 12, lineHeight: 17 },
+=======
+>>>>>>> 05775e151d80f152aef53ed06bc50aff42569ebe
   affectItem: { backgroundColor: COLORS.surfaceContainer, borderLeftWidth: 2, borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 8 },
   affectText: { color: 'rgba(255,255,255,0.8)', fontSize: 13, flex: 1 },
   actionWrap: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: COLORS.surface },
