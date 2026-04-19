@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Swipe4Change",
+    "slug": "swipe4change",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0f131e"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.swipe4change.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f131e"
+      },
+      "package": "com.swipe4change.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": []
+  }
+}
