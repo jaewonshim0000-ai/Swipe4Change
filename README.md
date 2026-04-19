@@ -565,6 +565,9 @@ Swipe4Change is a full MVP. It supports local development, web export, backend d
 
 For production use, configure Firebase, Supabase, Render, OpenRouter, and Resend with real deployed environment variables.
 
+
+### ALSO, change Firebase config in src/config/firebase.js
+
 ## License
 
 MIT
