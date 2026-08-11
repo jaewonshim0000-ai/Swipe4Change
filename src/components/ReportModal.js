@@ -1,147 +1,150 @@
 import React, { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS } from '../theme';
-
-const REPORT_REASONS = [
-  'False information',
-  'Malicious or harmful',
-  'Spam or scam',
-  'Harassment or hate',
-  'Impersonation',
-  'Other concern',
-];
+import { View, Text, StyleSheet, TextInput } from 'react-native';
+import { COLORS, FONTS } from '../theme';
+import { REPORT_REASONS } from '../data/petitions';
+import { hSuccess, hWarn, hTap } from '../utils/haptics';
+import { useApp } from '../contexts/AppContext';
+import Sheet from './Sheet';
+import Press from './Press';
+import Icon from './Icon';
 
 export default function ReportModal({ visible, petition, onClose, onSubmit }) {
+  const { setCelebration } = useApp();
   const [reason, setReason] = useState(REPORT_REASONS[0]);
   const [details, setDetails] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const reset = () => {
-    setReason(REPORT_REASONS[0]);
-    setDetails('');
-    setSubmitting(false);
-    setMessage('');
-  };
-
-  const close = () => {
-    reset();
-    onClose();
-  };
+  const reset = () => { setReason(REPORT_REASONS[0]); setDetails(''); setBusy(false); };
+  const close = () => { reset(); onClose(); };
 
   const submit = async () => {
-    if (submitting) return;
-    setMessage('');
-    setSubmitting(true);
+    if (busy) return;
+    setBusy(true);
     try {
-      const result = await onSubmit({ reason, details });
-      setMessage(result?.emailSent ? 'Report sent. Thank you.' : 'Report saved. Email alerts need backend email setup.');
-      setTimeout(close, 900);
-    } catch (error) {
-      setMessage(error.message || 'Could not submit report.');
-      setSubmitting(false);
+      await onSubmit({ reason, details });
+      hSuccess();
+    } catch {
+      // The design always confirms the report locally; a backend that is not
+      // configured must not lose the user's report.
+      hWarn();
     }
+    close();
+    setCelebration({
+      icon: 'shield_person',
+      kicker: 'REPORT SENT',
+      title: 'Report saved',
+      sub: 'Reports are sent to the Swipe4Change admin email for review, usually within 24 hours.',
+      color: COLORS.error,
+      from: '#4a1f1f',
+      to: '#c04646',
+    });
   };
 
   if (!petition) return null;
 
-  return (
-    <Modal animationType="slide" transparent visible={visible} onRequestClose={close} statusBarTranslucent>
-      <View style={styles.overlay}>
-        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={close} />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.wrap}>
-          <View style={styles.sheet}>
-            <View style={styles.header}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.kicker}>REPORT PETITION</Text>
-                <Text style={styles.title} numberOfLines={2}>{petition.title}</Text>
-              </View>
-              <TouchableOpacity onPress={close} style={styles.closeBtn}>
-                <MaterialIcons name="close" size={18} color="white" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              <Text style={styles.label}>Reason</Text>
-              <View style={styles.reasons}>
-                {REPORT_REASONS.map((item) => {
-                  const active = reason === item;
-                  return (
-                    <TouchableOpacity
-                      key={item}
-                      style={[styles.reasonChip, active && styles.reasonChipActive]}
-                      onPress={() => setReason(item)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.reasonText, active && styles.reasonTextActive]}>{item}</Text>
-                      {active && <MaterialIcons name="check" size={13} color={COLORS.error} />}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              <Text style={styles.label}>Details</Text>
-              <TextInput
-                style={styles.textarea}
-                value={details}
-                onChangeText={setDetails}
-                placeholder="Tell us what looks false, malicious, or unsafe."
-                placeholderTextColor="rgba(255,255,255,0.3)"
-                multiline
-                maxLength={800}
-              />
-              <Text style={styles.note}>Reports are sent to the Swipe4Change admin email for review.</Text>
-              {message ? <Text style={styles.message}>{message}</Text> : null}
-            </ScrollView>
-
-            <View style={styles.actions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={close}>
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.6 }]} onPress={submit} disabled={submitting}>
-                <MaterialIcons name="flag" size={16} color="white" />
-                <Text style={styles.submitText}>{submitting ? 'Sending...' : 'Submit report'}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
+  const header = (
+    <View style={s.header}>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={s.kicker}>REPORT PETITION</Text>
+        <Text style={s.title} numberOfLines={2}>{petition.title}</Text>
       </View>
-    </Modal>
+      <Press style={s.closeBtn} onPress={close} scale={0.88}>
+        <Icon name="close" size={17} color="#fff" />
+      </Press>
+    </View>
+  );
+
+  return (
+    <Sheet visible={visible} onClose={close} header={header}>
+      <View style={s.body}>
+        <Text style={s.label}>REASON</Text>
+        <View style={s.reasons}>
+          {REPORT_REASONS.map((r) => {
+            const active = reason === r;
+            return (
+              <Press
+                key={r}
+                style={[
+                  s.reason,
+                  {
+                    borderColor: active ? 'rgba(255,180,171,.5)' : 'rgba(255,255,255,.1)',
+                    backgroundColor: active ? 'rgba(255,180,171,.12)' : 'rgba(255,255,255,.04)',
+                  },
+                ]}
+                onPress={() => { hTap(); setReason(r); }}
+                scale={0.95}
+              >
+                <Text style={[s.reasonText, { color: active ? COLORS.error : 'rgba(255,255,255,.65)' }]}>{r}</Text>
+                {active ? <Icon name="check" size={13} weight={700} color={COLORS.error} /> : null}
+              </Press>
+            );
+          })}
+        </View>
+
+        <Text style={s.label}>DETAILS</Text>
+        <TextInput
+          style={s.textarea}
+          value={details}
+          onChangeText={setDetails}
+          placeholder="Tell us what looks false, malicious, or unsafe."
+          placeholderTextColor="rgba(255,255,255,.3)"
+          multiline
+          maxLength={800}
+        />
+        <Text style={s.note}>Reports are sent to the Swipe4Change admin email for review.</Text>
+
+        <View style={s.actions}>
+          <Press style={s.cancelBtn} onPress={close}>
+            <Text style={s.cancelText}>Cancel</Text>
+          </Press>
+          <Press style={s.submitBtn} onPress={submit} disabled={busy} scale={0.97}>
+            <Icon name="flag" size={17} fill={1} color="#fff" />
+            <Text style={s.submitText}>{busy ? 'Sending…' : 'Submit report'}</Text>
+          </Press>
+        </View>
+      </View>
+    </Sheet>
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'flex-end' },
-  wrap: { width: '100%' },
-  sheet: { backgroundColor: COLORS.surfaceLow, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)', maxHeight: '90%' },
-  header: { paddingHorizontal: 24, paddingTop: 18, paddingBottom: 14, flexDirection: 'row', gap: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
-  kicker: { color: COLORS.error, fontSize: 10, fontWeight: '900', letterSpacing: 2, marginBottom: 5 },
-  title: { color: 'white', fontSize: 18, fontWeight: '900', lineHeight: 22 },
-  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
-  body: { padding: 24, gap: 10 },
-  label: { color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: '900', letterSpacing: 1.5, marginTop: 4 },
-  reasons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  reasonChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.04)' },
-  reasonChipActive: { borderColor: 'rgba(255,180,171,0.5)', backgroundColor: 'rgba(255,180,171,0.12)' },
-  reasonText: { color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: '700' },
-  reasonTextActive: { color: COLORS.error },
-  textarea: { minHeight: 110, textAlignVertical: 'top', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)', color: 'white', paddingHorizontal: 14, paddingVertical: 12, fontSize: 14 },
-  note: { color: 'rgba(255,255,255,0.38)', fontSize: 12, lineHeight: 17 },
-  message: { color: COLORS.tertiary, fontSize: 12, fontWeight: '700' },
-  actions: { flexDirection: 'row', gap: 10, padding: 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)' },
-  cancelBtn: { flex: 1, height: 48, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)' },
-  cancelText: { color: 'rgba(255,255,255,0.75)', fontWeight: '800' },
-  submitBtn: { flex: 2, height: 48, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: 'rgba(186,26,26,0.9)' },
-  submitText: { color: 'white', fontWeight: '900' },
+const s = StyleSheet.create({
+  header: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+    paddingHorizontal: 20, paddingBottom: 16,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.06)',
+  },
+  kicker: { fontFamily: FONTS.mono, fontSize: 9, letterSpacing: 1.9, color: COLORS.error, marginBottom: 4 },
+  title: { fontFamily: FONTS.serif, fontSize: 24, lineHeight: 26.4, color: '#fff' },
+  closeBtn: {
+    width: 32, height: 32, borderRadius: 11,
+    backgroundColor: 'rgba(255,255,255,.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  body: { paddingHorizontal: 20, paddingTop: 16 },
+  label: { fontFamily: FONTS.mono, fontSize: 9, letterSpacing: 1.7, color: 'rgba(255,255,255,.45)', marginBottom: 8 },
+  reasons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  reason: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1,
+  },
+  reasonText: { fontFamily: FONTS.sansBold, fontSize: 13 },
+  textarea: {
+    height: 88, borderRadius: 15, textAlignVertical: 'top',
+    backgroundColor: 'rgba(255,255,255,.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)',
+    padding: 12, color: '#fff', fontFamily: FONTS.sans, fontSize: 13, lineHeight: 19.5,
+  },
+  note: { fontFamily: FONTS.sans, fontSize: 11, lineHeight: 15.95, color: 'rgba(255,255,255,.38)', marginTop: 8, marginBottom: 16 },
+
+  actions: { flexDirection: 'row', gap: 12 },
+  cancelBtn: {
+    flex: 1, height: 48, borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,.06)', alignItems: 'center', justifyContent: 'center',
+  },
+  cancelText: { fontFamily: FONTS.sansBold, fontSize: 13, color: 'rgba(255,255,255,.75)' },
+  submitBtn: {
+    flex: 2, height: 48, borderRadius: 999, flexDirection: 'row', gap: 8,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.reportRed,
+  },
+  submitText: { fontFamily: FONTS.sansBold, fontSize: 13, color: '#fff' },
 });

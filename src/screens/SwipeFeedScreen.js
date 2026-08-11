@@ -1,124 +1,153 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS } from '../theme';
+import { COLORS, DAILY_GOAL } from '../theme';
+import { getLevel } from '../utils/helpers';
 import { useApp } from '../contexts/AppContext';
+import ScreenBackground from '../components/ScreenBackground';
+import { MonoLabel } from '../components/Glass';
 import AppHeader from '../components/AppHeader';
 import SwipeDeck from '../components/SwipeDeck';
 import ActionButtons from '../components/ActionButtons';
 import SignModal from '../components/SignModal';
-import ReportModal from '../components/ReportModal';
+import Icon from '../components/Icon';
 
 export default function SwipeFeedScreen({ navigation }) {
   const {
     petitions,
     deckIndex,
     dailyCount,
-    DAILY_GOAL,
     advanceDeck,
+    rewindDeck,
     resetDeck,
     signPetition,
-    toggleSave,
-    savedIds,
-    reportPetition,
+    signedIds,
+    streak,
   } = useApp();
 
+  const level = getLevel(signedIds.length);
+  const deckRef = useRef(null);
   const [pendingSign, setPendingSign] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [pendingReport, setPendingReport] = useState(null);
 
-  const currentPetition = petitions[deckIndex];
+  // The design's deck is every petition the user has not signed yet.
+  const deck = useMemo(
+    () => petitions.filter((p) => !signedIds.includes(p.id)),
+    [petitions, signedIds],
+  );
+  const cards = deck.slice(deckIndex, deckIndex + 3);
+  const current = cards[0];
 
-  const handleSwipeRight = (petition) => {
-    setPendingSign(petition);
-    setModalVisible(true);
-  };
-
-  const handleSwipeLeft = () => advanceDeck();
-  const handleTap = (petition) => navigation.navigate('PetitionDetail', { petitionId: petition.id });
-
-  const handleConfirmSign = (petition, comment) => {
+  const handleConfirm = (petition, comment) => {
     signPetition(petition.id, { comment });
-    setModalVisible(false);
     setPendingSign(null);
-    advanceDeck();
-  };
-
-  const handleCancelSign = () => {
-    setModalVisible(false);
-    setPendingSign(null);
-    advanceDeck();
-  };
-
-  const triggerSwipe = (dir) => {
-    if (SwipeDeck.triggerSwipe) SwipeDeck.triggerSwipe(dir);
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <AppHeader
-        onProfilePress={() => navigation.navigate('ProfileTab')}
-        onNotifPress={() => navigation.navigate('Notifications')}
-      />
-
-      <View style={styles.hud}>
-        <View style={styles.hudHeader}>
-          <Text style={styles.hudLabel}>DAILY IMPACT</Text>
-          <Text style={styles.hudCount}>{dailyCount}/{DAILY_GOAL}</Text>
-        </View>
-        <View style={styles.hudBarBg}>
-          <View style={[styles.hudBarFill, { width: `${(dailyCount / DAILY_GOAL) * 100}%` }]} />
-        </View>
-      </View>
-
-      <View style={styles.deckArea}>
-        <SwipeDeck
-          data={petitions}
-          index={deckIndex}
-          onSwipeRight={handleSwipeRight}
-          onSwipeLeft={handleSwipeLeft}
-          onTap={handleTap}
-          onReport={(petition) => setPendingReport(petition)}
+    <ScreenBackground>
+      <SafeAreaView style={s.container} edges={['top']}>
+        <AppHeader
+          onProfilePress={() => navigation.navigate('Profile')}
+          onNotifPress={() => navigation.navigate('Notifications')}
         />
-      </View>
 
-      <ActionButtons
-        onPass={() => triggerSwipe('left')}
-        onSign={() => {
-          if (currentPetition) triggerSwipe('right');
-        }}
-        onSave={() => currentPetition && toggleSave(currentPetition.id)}
-        saved={currentPetition ? savedIds.includes(currentPetition.id) : false}
-        onReset={resetDeck}
-      />
+        {/* DAILY IMPACT bar */}
+        <View style={s.hud}>
+          <View style={s.hudTop}>
+            <View style={s.hudLeft}>
+              <MonoLabel size={9} spacing={1.8} color="rgba(255,255,255,.42)">DAILY IMPACT</MonoLabel>
+              <MonoLabel size={9} spacing={1.4} weight="bold" color="#fff">
+                {dailyCount}/{DAILY_GOAL}
+              </MonoLabel>
+            </View>
+            <View style={s.hudRight}>
+              <View style={s.streakChip}>
+                <Icon name="local_fire_department" size={11} fill={1} color={COLORS.amber} />
+                <MonoLabel size={9} spacing={0.6} weight="bold" color={COLORS.amber}>
+                  {streak.current}D
+                </MonoLabel>
+              </View>
+              <View style={s.levelChip}>
+                <Icon name="military_tech" size={11} fill={1} color={COLORS.primary} />
+                <MonoLabel size={9} spacing={0.6} weight="bold" color={COLORS.primary}>
+                  LV {level.level}
+                </MonoLabel>
+              </View>
+            </View>
+          </View>
 
-      <SignModal
-        visible={modalVisible}
-        petition={pendingSign}
-        onConfirm={handleConfirmSign}
-        onCancel={handleCancelSign}
-      />
+          <View style={s.track}>
+            <View style={s.segments} pointerEvents="none">
+              {[0, 1, 2, 3].map((i) => <View key={i} style={s.segment} />)}
+              <View style={{ flex: 1 }} />
+            </View>
+            <View style={[s.fill, { width: `${Math.min(100, (dailyCount / DAILY_GOAL) * 100)}%` }]} />
+          </View>
+        </View>
 
-      <ReportModal
-        visible={Boolean(pendingReport)}
-        petition={pendingReport}
-        onClose={() => setPendingReport(null)}
-        onSubmit={reportPetition}
-      />
-    </SafeAreaView>
+        <View style={s.deckArea}>
+          <SwipeDeck
+            ref={deckRef}
+            cards={cards}
+            onSignSwipe={(petition) => {
+              // Federal comment periods cannot be signed in the sheet; they
+              // open their detail page, where the official action lives.
+              if (petition.external && petition.canSignInApp === false) {
+                advanceDeck();
+                navigation.navigate('PetitionDetail', { petitionId: petition.id });
+                return;
+              }
+              setPendingSign(petition);
+            }}
+            onSkipSwipe={() => advanceDeck()}
+            onTap={(petition) => navigation.navigate('PetitionDetail', { petitionId: petition.id })}
+            onReset={resetDeck}
+          />
+        </View>
+
+        <ActionButtons
+          onUndo={rewindDeck}
+          canUndo={deckIndex > 0}
+          onSkip={() => deckRef.current?.flick(-1)}
+          onInfo={() => current && navigation.navigate('PetitionDetail', { petitionId: current.id })}
+          onSign={() => deckRef.current?.flick(1)}
+          disabled={!current}
+        />
+
+        <SignModal
+          visible={Boolean(pendingSign)}
+          petition={pendingSign}
+          onCancel={() => setPendingSign(null)}
+          onConfirm={handleConfirm}
+        />
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
-  hud: { paddingHorizontal: 24, paddingTop: 4, paddingBottom: 8 },
-  hudHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, paddingHorizontal: 2 },
-  hudLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '800', letterSpacing: 2 },
-  hudCount: { color: 'white', fontSize: 10, fontWeight: '800', letterSpacing: 2 },
-  hudBarBg: { height: 3, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' },
-  hudBarFill: {
-    height: '100%', backgroundColor: COLORS.primary, borderRadius: 2,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 4,
+const s = StyleSheet.create({
+  container: { flex: 1 },
+  hud: { paddingHorizontal: 20, paddingBottom: 12 },
+  hudTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  hudLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  hudRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  streakChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
+    backgroundColor: 'rgba(251,191,36,.10)', borderWidth: 1, borderColor: 'rgba(251,191,36,.26)',
   },
-  deckArea: { flex: 1, paddingHorizontal: 16, paddingVertical: 12 },
+  levelChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
+    backgroundColor: 'rgba(177,197,255,.10)', borderWidth: 1, borderColor: 'rgba(177,197,255,.24)',
+  },
+  track: { position: 'relative', height: 5, borderRadius: 99, backgroundColor: 'rgba(255,255,255,.06)', overflow: 'hidden' },
+  segments: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', opacity: 0.5 },
+  segment: { flex: 1, borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,.14)' },
+  fill: {
+    position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 99,
+    backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8, shadowRadius: 5,
+  },
+  deckArea: { flex: 1, marginHorizontal: 16, minHeight: 0 },
 });

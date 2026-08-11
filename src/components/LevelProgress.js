@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getLevel, getNextLevel } from '../utils/helpers';
-import { COLORS } from '../theme';
+import { COLORS, FONTS } from '../theme';
 
 export default function LevelProgress({ signedCount }) {
   const current = getLevel(signedCount);
@@ -66,14 +66,14 @@ const styles = StyleSheet.create({
     borderRadius: 28,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  levelLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 2 },
-  name: { color: 'white', fontSize: 28, fontWeight: '900', marginBottom: 4 },
-  sub: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 },
+  levelLabel: { fontFamily: FONTS.mono, fontSize: 9, letterSpacing: 1.9 },
+  name: { color: COLORS.white, fontFamily: FONTS.serif, fontSize: 30, marginBottom: 4 },
+  sub: { color: 'rgba(255,255,255,0.5)', fontFamily: FONTS.sans, fontSize: 13, marginBottom: 20 },
   progressBarBg: {
     height: 6, backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 3, overflow: 'hidden', marginBottom: 8,
   },
   progressBarFill: { height: '100%', borderRadius: 3 },
   labels: { flexDirection: 'row', justifyContent: 'space-between' },
-  milestone: { color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
+  milestone: { color: 'rgba(255,255,255,0.4)', fontFamily: FONTS.mono, fontSize: 8.5, letterSpacing: 1.5 },
 });

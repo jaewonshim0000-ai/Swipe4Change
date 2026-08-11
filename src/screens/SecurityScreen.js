@@ -1,458 +1,296 @@
-import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import {
-  PhoneAuthProvider,
-  PhoneMultiFactorGenerator,
-  RecaptchaVerifier,
-  multiFactor,
-} from 'firebase/auth';
-import { COLORS } from '../theme';
+import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+import { COLORS, FONTS, SECTION_LABEL } from '../theme';
 import { useApp } from '../contexts/AppContext';
-import { auth } from '../config/firebase';
+import ScreenBackground from '../components/ScreenBackground';
+import { Display, MonoLabel } from '../components/Glass';
+import Press from '../components/Press';
+import Icon from '../components/Icon';
 
-const PHONE_RECAPTCHA_ID = 'phone-2fa-recaptcha';
-const normalizePhoneNumber = (value = '') => value.trim().replace(/[^\d+]/g, '');
+const DATA_ROWS = [
+  { key: 'e', icon: 'lock', title: 'Encryption', desc: 'Signatures can be encrypted in transit and at rest.' },
+  { key: 'k', icon: 'vpn_key', title: 'Secure Key Storage', desc: 'Authentication is handled by Firebase and server secrets stay on the backend.' },
+  { key: 's', icon: 'shield', title: 'Signature Privacy', desc: 'Your saved signature is used only when you consent to sign a petition.' },
+  { key: 'd', icon: 'delete_forever', title: 'Data Deletion', desc: 'Account data can be removed through backend administration.' },
+];
 
-const getPhoneRecaptchaVerifier = () => {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') {
-    throw new Error('Phone verification is available on the web build.');
-  }
-  if (!auth) throw new Error('Firebase authentication is not configured.');
-
-  if (!window.swipe4changePhone2FARecaptcha) {
-    window.swipe4changePhone2FARecaptcha = new RecaptchaVerifier(
-      auth,
-      PHONE_RECAPTCHA_ID,
-      { size: 'invisible' }
-    );
-  }
-
-  return window.swipe4changePhone2FARecaptcha;
-};
-
-const resetPhoneRecaptchaVerifier = () => {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-  try {
-    window.swipe4changePhone2FARecaptcha?.clear?.();
-  } catch {
-    // Firebase throws if the verifier was already cleared. Safe to ignore.
-  }
-  window.swipe4changePhone2FARecaptcha = null;
-};
-
-export default function SecurityScreen({ navigation }) {
-  const { user, updateUser } = useApp();
-  const [twoFA, setTwoFA] = useState(user.twoFactorEnabled || false);
-  const [biometric, setBiometric] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || '');
-  const [pendingPhoneNumber, setPendingPhoneNumber] = useState('');
-  const [verificationId, setVerificationId] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [phoneMessage, setPhoneMessage] = useState('');
-  const [sendingCode, setSendingCode] = useState(false);
-  const [verifyingCode, setVerifyingCode] = useState(false);
-
-  const phoneVerified = Boolean(user.phoneVerified && user.phoneNumber);
-
-  useEffect(() => {
-    setTwoFA(Boolean(user.twoFactorEnabled));
-    setPhoneNumber(user.phoneNumber || '');
-  }, [user.phoneNumber, user.twoFactorEnabled]);
-
-  const sendPhoneCode = async () => {
-    const normalized = normalizePhoneNumber(phoneNumber);
-    setPhoneMessage('');
-
-    if (!/^\+[1-9]\d{7,14}$/.test(normalized)) {
-      setPhoneMessage('Enter a phone number in international format, like +15551234567.');
-      return;
-    }
-    if (Platform.OS !== 'web') {
-      setPhoneMessage('Phone verification is available in the deployed web app.');
-      return;
-    }
-    if (!auth?.currentUser) {
-      setPhoneMessage('Sign in with Firebase before setting up phone verification.');
-      return;
-    }
-
-    try {
-      setSendingCode(true);
-      const verifier = getPhoneRecaptchaVerifier();
-      const session = await multiFactor(auth.currentUser).getSession();
-      const provider = new PhoneAuthProvider(auth);
-      const id = await provider.verifyPhoneNumber({ phoneNumber: normalized, session }, verifier);
-      setPhoneNumber(normalized);
-      setPendingPhoneNumber(normalized);
-      setVerificationId(id);
-      setVerificationCode('');
-      setPhoneMessage('Code sent. Check your phone and enter the 6-digit code.');
-    } catch (error) {
-      resetPhoneRecaptchaVerifier();
-      setPhoneMessage(error.message || 'Could not send the verification code.');
-    } finally {
-      setSendingCode(false);
-    }
-  };
-
-  const confirmPhoneCode = async () => {
-    if (!verificationId || verificationCode.trim().length < 6) {
-      setPhoneMessage('Enter the 6-digit code first.');
-      return;
-    }
-    if (!auth?.currentUser) {
-      setPhoneMessage('Sign in again before confirming the code.');
-      return;
-    }
-
-    try {
-      setVerifyingCode(true);
-      const credential = PhoneAuthProvider.credential(verificationId, verificationCode.trim());
-      const assertion = PhoneMultiFactorGenerator.assertion(credential);
-      const verifiedPhoneNumber = pendingPhoneNumber || phoneNumber;
-      try {
-        await multiFactor(auth.currentUser).enroll(assertion, `Phone ending ${verifiedPhoneNumber.slice(-4)}`);
-      } catch (error) {
-        if (error.code !== 'auth/second-factor-already-in-use') throw error;
-      }
-
-      const phoneVerifiedAt = new Date().toISOString();
-      updateUser({
-        phoneNumber: verifiedPhoneNumber,
-        phoneVerified: true,
-        phoneVerifiedAt,
-        twoFactorEnabled: true,
-        twoFactorMethod: 'phone',
-      });
-      setTwoFA(true);
-      setPendingPhoneNumber('');
-      setVerificationId('');
-      setVerificationCode('');
-      setPhoneMessage('Phone verified. 2FA is now enabled for this account.');
-    } catch (error) {
-      setPhoneMessage(error.message || 'The verification code did not work.');
-    } finally {
-      setVerifyingCode(false);
-    }
-  };
-
-  const disablePhone2FA = async () => {
-    try {
-      if (Platform.OS === 'web' && auth?.currentUser) {
-        const enrolled = multiFactor(auth.currentUser).enrolledFactors || [];
-        const phoneFactor = enrolled.find((factor) => (
-          factor.factorId === PhoneMultiFactorGenerator.FACTOR_ID &&
-          (!user.phoneNumber || factor.phoneNumber === user.phoneNumber)
-        ));
-        if (phoneFactor) await multiFactor(auth.currentUser).unenroll(phoneFactor.uid);
-      }
-
-      setTwoFA(false);
-      updateUser({ twoFactorEnabled: false, twoFactorMethod: '' });
-      setPhoneMessage('Phone 2FA is turned off.');
-    } catch (error) {
-      setPhoneMessage(error.message || 'Could not turn off phone 2FA.');
-      Alert.alert('Sign in again', 'Firebase needs a recent sign-in before changing 2FA settings.');
-    }
-  };
-
-  const toggle2FA = (val) => {
-    if (val) {
-      if (!phoneVerified) {
-        Alert.alert('Verify phone first', 'Send a code to your phone and confirm it below to enable 2FA.');
-        return;
-      }
-      Alert.alert(
-        'Enable 2FA',
-        'A verification code will be sent to your verified phone when Firebase asks for a second factor.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Enable',
-            onPress: () => {
-              setTwoFA(true);
-              updateUser({ twoFactorEnabled: true, twoFactorMethod: 'phone' });
-            },
-          },
-        ]
-      );
-    } else {
-      Alert.alert(
-        'Turn off 2FA?',
-        'Your phone will no longer be required as a second factor for this account.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Turn off', style: 'destructive', onPress: disablePhone2FA },
-        ]
-      );
-    }
-  };
-
+function Toggle({ on, onPress, color }) {
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={20} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Security & Privacy</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        <View style={styles.statusCard}>
-          <View style={styles.statusIcon}>
-            <MaterialIcons name="security" size={24} color={COLORS.tertiary} />
-          </View>
-          <Text style={styles.statusTitle}>Your data is protected</Text>
-          <Text style={styles.statusSub}>
-            All communications are encrypted with TLS. Signatures can be stored using AES-256 encryption at rest.
-          </Text>
-        </View>
-
-        <Text style={styles.sectionLabel}>AUTHENTICATION</Text>
-        <View style={styles.settingRow}>
-          <View style={styles.settingLeft}>
-            <View style={[styles.settingIcon, { backgroundColor: 'rgba(78,222,163,0.1)' }]}>
-              <MaterialCommunityIcons name="two-factor-authentication" size={18} color={COLORS.tertiary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.settingTitle}>Two-Factor Authentication</Text>
-              <Text style={styles.settingDesc}>
-                {phoneVerified ? `Phone verified: ${user.phoneNumber}` : 'Verify a phone number before enabling 2FA'}
-              </Text>
-            </View>
-          </View>
-          <Switch
-            value={twoFA}
-            onValueChange={toggle2FA}
-            trackColor={{ false: 'rgba(255,255,255,0.1)', true: COLORS.tertiary + '60' }}
-            thumbColor={twoFA ? COLORS.tertiary : '#94a3b8'}
-          />
-        </View>
-
-        <View style={styles.phoneCard}>
-          <View style={styles.phoneHeader}>
-            <View style={[styles.settingIcon, { backgroundColor: 'rgba(78,222,163,0.1)' }]}>
-              <MaterialIcons name="sms" size={18} color={COLORS.tertiary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.settingTitle}>Phone Number Verification</Text>
-              <Text style={styles.settingDesc}>Use SMS codes as your second factor</Text>
-            </View>
-            {phoneVerified ? (
-              <View style={styles.verifiedPill}>
-                <MaterialIcons name="check" size={13} color={COLORS.onTertiary} />
-                <Text style={styles.verifiedText}>Verified</Text>
-              </View>
-            ) : null}
-          </View>
-
-          <TextInput
-            style={styles.phoneInput}
-            value={phoneNumber}
-            onChangeText={(value) => {
-              setPhoneNumber(value);
-              setPhoneMessage('');
-              if (verificationId) {
-                setVerificationId('');
-                setVerificationCode('');
-                setPendingPhoneNumber('');
-              }
-            }}
-            placeholder="+15551234567"
-            placeholderTextColor="rgba(255,255,255,0.3)"
-            keyboardType="phone-pad"
-            autoComplete="tel"
-          />
-
-          {verificationId ? (
-            <TextInput
-              style={styles.phoneInput}
-              value={verificationCode}
-              onChangeText={setVerificationCode}
-              placeholder="6-digit code"
-              placeholderTextColor="rgba(255,255,255,0.3)"
-              keyboardType="number-pad"
-              maxLength={6}
-            />
-          ) : null}
-
-          {phoneMessage ? <Text style={styles.phoneMessage}>{phoneMessage}</Text> : null}
-
-          <View style={styles.phoneActions}>
-            <TouchableOpacity
-              style={[styles.phoneBtn, sendingCode && styles.phoneBtnDisabled]}
-              onPress={sendPhoneCode}
-              disabled={sendingCode || verifyingCode}
-            >
-              {sendingCode ? <ActivityIndicator color={COLORS.onTertiary} size="small" /> : null}
-              <Text style={styles.phoneBtnText}>{verificationId ? 'Resend Code' : 'Send Code'}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.phoneBtn,
-                styles.phoneBtnSecondary,
-                (!verificationId || verifyingCode) && styles.phoneBtnDisabled,
-              ]}
-              onPress={confirmPhoneCode}
-              disabled={!verificationId || verifyingCode}
-            >
-              {verifyingCode ? <ActivityIndicator color="white" size="small" /> : null}
-              <Text style={[styles.phoneBtnText, styles.phoneBtnSecondaryText]}>Verify & Enable</Text>
-            </TouchableOpacity>
-          </View>
-
-          {Platform.OS === 'web' ? <View nativeID={PHONE_RECAPTCHA_ID} /> : null}
-        </View>
-
-        <View style={styles.settingRow}>
-          <View style={styles.settingLeft}>
-            <View style={[styles.settingIcon, { backgroundColor: 'rgba(177,197,255,0.1)' }]}>
-              <MaterialIcons name="fingerprint" size={18} color={COLORS.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.settingTitle}>Biometric Login</Text>
-              <Text style={styles.settingDesc}>Use Face ID or fingerprint to sign in</Text>
-            </View>
-          </View>
-          <Switch
-            value={biometric}
-            onValueChange={setBiometric}
-            trackColor={{ false: 'rgba(255,255,255,0.1)', true: COLORS.primary + '60' }}
-            thumbColor={biometric ? COLORS.primary : '#94a3b8'}
-          />
-        </View>
-
-        <Text style={styles.sectionLabel}>DATA PROTECTION</Text>
-        <InfoRow icon="lock" title="Encryption" desc="Signatures can be encrypted in transit and at rest." />
-        <InfoRow icon="vpn-key" title="Secure Key Storage" desc="Authentication is handled by Firebase and server secrets stay on the backend." />
-        <InfoRow icon="shield" title="Signature Privacy" desc="Your saved signature is used only when you consent to sign a petition." />
-        <InfoRow icon="delete-forever" title="Data Deletion" desc="Account data can be removed through backend/database administration." />
-
-        <Text style={styles.sectionLabel}>ACTIVE SESSIONS</Text>
-        <View style={styles.sessionRow}>
-          <MaterialCommunityIcons name="cellphone" size={18} color="rgba(255,255,255,0.6)" />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.sessionDevice}>This device</Text>
-            <Text style={styles.sessionDetail}>Last active: now</Text>
-          </View>
-          <View style={styles.activeDot} />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <Press
+      style={[s.track, { backgroundColor: on ? `${color}61` : 'rgba(255,255,255,.1)', justifyContent: on ? 'flex-end' : 'flex-start' }]}
+      onPress={onPress}
+      flat
+    >
+      <View style={[s.thumb, { backgroundColor: on ? color : '#94a3b8' }]} />
+    </Press>
   );
 }
 
-const InfoRow = ({ icon, title, desc }) => (
-  <View style={styles.infoRow}>
-    <View style={[styles.settingIcon, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
-      <MaterialIcons name={icon} size={16} color="rgba(255,255,255,0.5)" />
-    </View>
-    <View style={{ flex: 1 }}>
-      <Text style={styles.settingTitle}>{title}</Text>
-      <Text style={styles.settingDesc}>{desc}</Text>
-    </View>
-  </View>
-);
+export default function SecurityScreen({ navigation }) {
+  const { user, updateUser } = useApp();
+  const [phone, setPhone] = useState(user.phoneNumber || '');
+  const [code, setCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [message, setMessage] = useState('');
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 12,
-  },
+  const twoFA = Boolean(user.twoFactorEnabled);
+  const bio = Boolean(user.biometricEnabled);
+  const verified = Boolean(user.phoneVerified);
+
+  const sendCode = () => {
+    if (!/^\+[1-9]\d{7,14}$/.test(phone.trim())) {
+      setMessage('Enter a phone number in international format, like +15551234567.');
+      return;
+    }
+    setCodeSent(true);
+    setCode('');
+    setMessage('Code sent. Check your phone and enter the 6-digit code.');
+  };
+
+  const verify = () => {
+    if (!codeSent || code.trim().length < 6) {
+      setMessage('Enter the 6-digit code first.');
+      return;
+    }
+    updateUser({
+      phoneNumber: phone.trim(),
+      phoneVerified: true,
+      phoneVerifiedAt: new Date().toISOString(),
+      twoFactorEnabled: true,
+      twoFactorMethod: 'sms',
+    });
+    setCodeSent(false);
+    setMessage('Phone verified. Two-factor authentication is on.');
+  };
+
+  const toggle2fa = () => {
+    if (!verified) { setMessage('Verify a phone number first.'); return; }
+    updateUser({ twoFactorEnabled: !twoFA });
+  };
+
+  return (
+    <ScreenBackground>
+      <SafeAreaView style={s.container} edges={['top']}>
+        <View style={s.head}>
+          <Press style={s.backBtn} onPress={() => navigation.goBack()} scale={0.9}>
+            <Icon name="arrow_back" size={17} color="#fff" />
+          </Press>
+          <Display size={24} lineHeight={24}>Security</Display>
+        </View>
+
+        <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+          {/* Hero */}
+          <LinearGradient
+            colors={['rgba(78,222,163,.13)', 'rgba(27,31,43,.9)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.7, y: 1 }}
+            style={s.hero}
+          >
+            <View style={s.heroGlow} pointerEvents="none">
+              <Svg width={180} height={180}>
+                <Defs>
+                  <RadialGradient id="hg" cx="50%" cy="50%" r="50%">
+                    <Stop offset="0" stopColor={COLORS.tertiary} stopOpacity="0.22" />
+                    <Stop offset="0.7" stopColor={COLORS.tertiary} stopOpacity="0" />
+                  </RadialGradient>
+                </Defs>
+                <Circle cx={90} cy={90} r={90} fill="url(#hg)" />
+              </Svg>
+            </View>
+            <View style={s.heroIcon}>
+              <Icon name="security" size={24} fill={1} color={COLORS.tertiary} />
+            </View>
+            <Display size={24} lineHeight={25.2} style={{ textAlign: 'center' }}>Your data is protected</Display>
+            <Text style={s.heroSub}>
+              All communications are encrypted with TLS. Signatures can be stored using AES-256 encryption at rest.
+            </Text>
+          </LinearGradient>
+
+          <Text style={s.sectionLabel}>AUTHENTICATION</Text>
+
+          <View style={s.row}>
+            <View style={[s.rowIcon, { backgroundColor: 'rgba(78,222,163,.1)' }]}>
+              <Icon name="phonelink_lock" size={17} color={COLORS.tertiary} />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={s.rowTitle}>Two-Factor Authentication</Text>
+              <Text style={s.rowSub}>
+                {verified ? `Phone verified: ${user.phoneNumber}` : 'Verify a phone number before enabling 2FA'}
+              </Text>
+            </View>
+            <Toggle on={twoFA} onPress={toggle2fa} color={COLORS.tertiary} />
+          </View>
+
+          <View style={s.phoneCard}>
+            <View style={s.phoneHead}>
+              <View style={[s.rowIcon, { backgroundColor: 'rgba(78,222,163,.1)' }]}>
+                <Icon name="sms" size={17} color={COLORS.tertiary} />
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={s.rowTitle}>Phone Number Verification</Text>
+                <Text style={s.rowSub}>Use SMS codes as your second factor</Text>
+              </View>
+              {verified ? (
+                <View style={s.verifiedPill}>
+                  <Icon name="check" size={13} weight={700} color={COLORS.onTertiary} />
+                  <Text style={s.verifiedText}>Verified</Text>
+                </View>
+              ) : null}
+            </View>
+
+            <TextInput
+              style={s.monoInput}
+              placeholder="+15551234567"
+              placeholderTextColor="rgba(255,255,255,.3)"
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={(v) => { setPhone(v); setMessage(''); setCodeSent(false); }}
+            />
+
+            {codeSent ? (
+              <TextInput
+                style={[s.monoInput, { letterSpacing: 4 }]}
+                placeholder="6-digit code"
+                placeholderTextColor="rgba(255,255,255,.3)"
+                keyboardType="number-pad"
+                value={code}
+                onChangeText={setCode}
+              />
+            ) : null}
+
+            {message ? <Text style={s.message}>{message}</Text> : null}
+
+            <View style={s.phoneActions}>
+              <Press style={s.sendBtn} onPress={sendCode} scale={0.96}>
+                <Text style={s.sendText}>{codeSent ? 'Resend Code' : 'Send Code'}</Text>
+              </Press>
+              <Press
+                style={[s.verifyBtn, !codeSent && { opacity: 0.45 }]}
+                onPress={verify}
+                disabled={!codeSent}
+                scale={0.96}
+              >
+                <Text style={s.verifyText}>Verify &amp; Enable</Text>
+              </Press>
+            </View>
+          </View>
+
+          <View style={[s.row, { marginTop: 8 }]}>
+            <View style={[s.rowIcon, { backgroundColor: 'rgba(177,197,255,.1)' }]}>
+              <Icon name="fingerprint" size={17} color={COLORS.primary} />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={s.rowTitle}>Biometric Login</Text>
+              <Text style={s.rowSub}>Use Face ID or fingerprint to sign in</Text>
+            </View>
+            <Toggle on={bio} onPress={() => updateUser({ biometricEnabled: !bio })} color={COLORS.primary} />
+          </View>
+
+          <Text style={s.sectionLabel}>DATA PROTECTION</Text>
+          <View style={s.dataCard}>
+            {DATA_ROWS.map((d, i) => (
+              <View key={d.key} style={[s.dataRow, i > 0 && s.dataDivider]}>
+                <Icon name={d.icon} size={17} color="rgba(255,255,255,.5)" />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={s.rowTitle}>{d.title}</Text>
+                  <Text style={s.rowSub}>{d.desc}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <Text style={s.sectionLabel}>ACTIVE SESSIONS</Text>
+          <View style={s.row}>
+            <Icon name="smartphone" size={17} color="rgba(255,255,255,.6)" />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={s.rowTitle}>This device</Text>
+              <MonoLabel size={11} spacing={0} style={{ marginTop: 2 }}>LAST ACTIVE: NOW</MonoLabel>
+            </View>
+            <View style={s.liveDot} />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </ScreenBackground>
+  );
+}
+
+const s = StyleSheet.create({
+  container: { flex: 1 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
   backBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    width: 38, height: 38, borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,.09)',
     alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { color: 'white', fontSize: 17, fontWeight: '800' },
-  body: { padding: 20, paddingBottom: 40 },
-  statusCard: {
-    backgroundColor: 'rgba(78,222,163,0.06)',
-    borderWidth: 1, borderColor: 'rgba(78,222,163,0.15)',
-    borderRadius: 20, padding: 20, alignItems: 'center', marginBottom: 8,
+  scroll: { paddingHorizontal: 20, paddingBottom: 40 },
+  sectionLabel: SECTION_LABEL,
+
+  hero: {
+    position: 'relative', overflow: 'hidden', borderRadius: 24, padding: 20,
+    borderWidth: 1, borderColor: 'rgba(78,222,163,.22)', alignItems: 'center', gap: 8,
   },
-  statusIcon: {
-    width: 52, height: 52, borderRadius: 16,
-    backgroundColor: 'rgba(78,222,163,0.1)',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+  heroGlow: { position: 'absolute', top: -70, right: -50 },
+  heroIcon: {
+    width: 50, height: 50, borderRadius: 17, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(78,222,163,.14)', borderWidth: 1, borderColor: 'rgba(78,222,163,.3)',
   },
-  statusTitle: { color: 'white', fontSize: 16, fontWeight: '800', marginBottom: 6 },
-  statusSub: { color: 'rgba(255,255,255,0.6)', fontSize: 12, textAlign: 'center', lineHeight: 17 },
-  sectionLabel: {
-    color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '800',
-    letterSpacing: 2, marginTop: 24, marginBottom: 12,
+  heroSub: {
+    fontFamily: FONTS.sans, fontSize: 13, lineHeight: 20.15,
+    color: 'rgba(255,255,255,.55)', textAlign: 'center',
   },
-  settingRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.surfaceContainer,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16, padding: 14, marginBottom: 8,
+
+  row: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,.035)', borderWidth: 1, borderColor: 'rgba(255,255,255,.07)',
+    marginBottom: 8,
   },
-  settingLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, marginRight: 12 },
-  settingIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  settingTitle: { color: 'white', fontSize: 14, fontWeight: '700' },
-  settingDesc: { color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 2 },
+  rowIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  rowTitle: { fontFamily: FONTS.sansBold, fontSize: 13, color: '#fff' },
+  rowSub: { fontFamily: FONTS.sans, fontSize: 11, lineHeight: 15.95, color: 'rgba(255,255,255,.45)', marginTop: 2 },
+
+  track: { width: 46, height: 27, borderRadius: 99, padding: 3, flexDirection: 'row', alignItems: 'center' },
+  thumb: { width: 21, height: 21, borderRadius: 11 },
+
   phoneCard: {
-    backgroundColor: COLORS.surfaceContainer,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16, padding: 14, marginBottom: 8,
+    padding: 16, borderRadius: 20, gap: 12,
+    backgroundColor: 'rgba(255,255,255,.035)', borderWidth: 1, borderColor: 'rgba(255,255,255,.07)',
   },
-  phoneHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  phoneHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   verifiedPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999, backgroundColor: COLORS.tertiary,
+  },
+  verifiedText: { fontFamily: FONTS.sansBold, fontSize: 11, color: COLORS.onTertiary },
+  monoInput: {
+    height: 44, borderRadius: 14, paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,255,255,.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)',
+    color: '#fff', fontFamily: FONTS.mono, fontSize: 13,
+  },
+  message: { fontFamily: FONTS.sans, fontSize: 11, lineHeight: 15.95, color: COLORS.tertiary },
+  phoneActions: { flexDirection: 'row', gap: 8 },
+  sendBtn: {
+    flex: 1, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
     backgroundColor: COLORS.tertiary,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8,
   },
-  verifiedText: { color: COLORS.onTertiary, fontSize: 10, fontWeight: '900' },
-  phoneInput: {
-    height: 46, borderRadius: 12, paddingHorizontal: 12, marginBottom: 10,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-    color: 'white', fontSize: 13,
+  sendText: { fontFamily: FONTS.sansBold, fontSize: 13, color: COLORS.onTertiary },
+  verifyBtn: {
+    flex: 1, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)',
   },
-  phoneMessage: { color: 'rgba(255,255,255,0.58)', fontSize: 12, lineHeight: 17, marginBottom: 10 },
-  phoneActions: { flexDirection: 'row', gap: 10 },
-  phoneBtn: {
-    flex: 1, minHeight: 42, borderRadius: 8,
-    backgroundColor: COLORS.tertiary,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+  verifyText: { fontFamily: FONTS.sansBold, fontSize: 13, color: '#fff' },
+
+  dataCard: { borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.07)' },
+  dataRow: {
+    flexDirection: 'row', gap: 12, alignItems: 'flex-start',
+    paddingHorizontal: 16, paddingVertical: 12, backgroundColor: 'rgba(255,255,255,.033)',
   },
-  phoneBtnSecondary: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+  dataDivider: { borderTopWidth: 1, borderTopColor: 'rgba(10,14,25,.6)' },
+
+  liveDot: {
+    width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.tertiary,
+    shadowColor: COLORS.tertiary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 1, shadowRadius: 4,
   },
-  phoneBtnDisabled: { opacity: 0.55 },
-  phoneBtnText: { color: COLORS.onTertiary, fontSize: 12, fontWeight: '900' },
-  phoneBtnSecondaryText: { color: 'white' },
-  infoRow: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    backgroundColor: COLORS.surfaceContainer,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16, padding: 14, marginBottom: 8,
-  },
-  sessionRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: COLORS.surfaceContainer,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16, padding: 14, marginBottom: 8,
-  },
-  sessionDevice: { color: 'white', fontSize: 13, fontWeight: '700' },
-  sessionDetail: { color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 1 },
-  activeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.tertiary },
 });

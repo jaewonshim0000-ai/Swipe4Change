@@ -1,193 +1,241 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS, CATEGORY_STYLE } from '../theme';
-import { PETITION_CATEGORIES } from '../data/petitions';
+import { LinearGradient } from 'expo-linear-gradient';
+import { CATEGORY_STYLE, COLORS, FONTS, fmt } from '../theme';
+import { hSelect } from '../utils/haptics';
 import { useApp } from '../contexts/AppContext';
+import ScreenBackground from '../components/ScreenBackground';
+import { Display, MonoLabel } from '../components/Glass';
 import AppHeader from '../components/AppHeader';
 import PetitionListItem from '../components/PetitionListItem';
-import ReportModal from '../components/ReportModal';
+import Press from '../components/Press';
+import Icon from '../components/Icon';
 
 const URGENCY_RANK = { low: 1, medium: 2, high: 3, critical: 4 };
+const SORTS = [
+  { key: 'trending', label: 'Trending' },
+  { key: 'urgent', label: 'Urgent' },
+  { key: 'newest', label: 'Newest' },
+];
 
 export default function DiscoverScreen({ navigation }) {
-  const { petitions, reportPetition } = useApp();
+  const { petitions } = useApp();
   const [query, setQuery] = useState('');
-  const [selectedCat, setSelectedCat] = useState(null);
-  const [sortBy, setSortBy] = useState('trending');
-  const [pendingReport, setPendingReport] = useState(null);
+  const [filterCat, setFilterCat] = useState(null);
+  const [sort, setSort] = useState('trending');
 
-  const filtered = useMemo(() => {
-    let result = [...petitions];
+  const open = (id) => navigation.navigate('PetitionDetail', { petitionId: id });
+  const q = query.trim().toLowerCase();
 
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      result = result.filter((p) => (
-        p.title.toLowerCase().includes(q) ||
-        p.summary.toLowerCase().includes(q) ||
-        p.organization.toLowerCase().includes(q) ||
-        p.location.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        (p.tags || []).some((tag) => tag.toLowerCase().includes(q))
-      ));
-    }
+  const results = useMemo(() => {
+    let res = petitions.filter((p) => {
+      if (filterCat && p.category !== filterCat) return false;
+      if (!q) return true;
+      return `${p.title}${p.summary}${p.organization}${p.location}${p.category}${(p.tags || []).join(' ')}`
+        .toLowerCase()
+        .includes(q);
+    });
+    if (sort === 'urgent') res = [...res].sort((a, b) => (URGENCY_RANK[b.urgency] || 0) - (URGENCY_RANK[a.urgency] || 0));
+    else if (sort === 'newest') res = [...res].sort((a, b) => String(b.id).localeCompare(String(a.id)));
+    else res = [...res].sort((a, b) => (b.weeklyIncrease || 0) - (a.weeklyIncrease || 0));
+    return res;
+  }, [petitions, q, filterCat, sort]);
 
-    if (selectedCat) {
-      result = result.filter((p) => p.category === selectedCat);
-    }
+  const closingSoon = useMemo(
+    () => petitions.filter((p) => p.daysLeft <= 7).sort((a, b) => a.daysLeft - b.daysLeft),
+    [petitions],
+  );
+  const showRail = !q && !filterCat;
 
-    if (sortBy === 'urgent') {
-      result.sort((a, b) => (URGENCY_RANK[b.urgency] || 0) - (URGENCY_RANK[a.urgency] || 0));
-    } else if (sortBy === 'newest') {
-      result.sort((a, b) => String(b.id).localeCompare(String(a.id)));
-    } else {
-      result.sort((a, b) => (b.weeklyIncrease || 0) - (a.weeklyIncrease || 0));
-    }
-
-    return result;
-  }, [petitions, query, selectedCat, sortBy]);
+  const chips = [{ key: null, label: 'All', icon: 'apps' },
+    ...Object.keys(CATEGORY_STYLE).map((k) => ({ key: k, label: k, icon: CATEGORY_STYLE[k].icon }))];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <AppHeader
-        onProfilePress={() => navigation.navigate('ProfileTab')}
-        onNotifPress={() => navigation.navigate('Notifications')}
-      />
-
-      <View style={styles.titleBlock}>
-        <Text style={styles.title}>Discover</Text>
-        <Text style={styles.sub}>Find petitions that matter to you</Text>
-      </View>
-
-      <View style={styles.searchWrap}>
-        <MaterialIcons name="search" size={18} color="rgba(255,255,255,0.4)" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search petitions, tags, organizations..."
-          placeholderTextColor="rgba(255,255,255,0.3)"
-          value={query}
-          onChangeText={setQuery}
+    <ScreenBackground>
+      <SafeAreaView style={s.container} edges={['top']}>
+        <AppHeader
+          onProfilePress={() => navigation.navigate('Profile')}
+          onNotifPress={() => navigation.navigate('Notifications')}
         />
-        {query.length > 0 ? (
-          <TouchableOpacity onPress={() => setQuery('')}>
-            <MaterialIcons name="close" size={16} color="rgba(255,255,255,0.4)" />
-          </TouchableOpacity>
-        ) : null}
-      </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-        <TouchableOpacity
-          style={[styles.chip, !selectedCat && styles.chipActive]}
-          onPress={() => setSelectedCat(null)}
-        >
-          <Text style={[styles.chipText, !selectedCat && styles.chipTextActive]}>All</Text>
-        </TouchableOpacity>
+        <View style={s.head}>
+          <Display size={32} lineHeight={32}>Discover</Display>
+          <Text style={s.sub}>{petitions.length} live campaigns across 8 causes</Text>
 
-        {PETITION_CATEGORIES.map((cat) => {
-          const active = selectedCat === cat.key;
-          const s = CATEGORY_STYLE[cat.key] || CATEGORY_STYLE.Climate;
-          return (
-            <TouchableOpacity
-              key={cat.key}
-              style={[styles.chip, active && { backgroundColor: `${s.glow}20`, borderColor: `${s.glow}40` }]}
-              onPress={() => setSelectedCat(active ? null : cat.key)}
-            >
-              <MaterialCommunityIcons name={s.icon} size={13} color={active ? s.glow : 'rgba(255,255,255,0.5)'} />
-              <Text style={[styles.chipText, active && { color: s.glow }]}>{cat.key}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      <View style={styles.sortRow}>
-        <Text style={styles.resultCount}>{filtered.length} petitions</Text>
-        <View style={styles.sortBtns}>
-          {[
-            { key: 'trending', label: 'Trending', icon: 'trending-up' },
-            { key: 'urgent', label: 'Urgent', icon: 'local-fire-department' },
-            { key: 'newest', label: 'Newest', icon: 'schedule' },
-          ].map((s) => (
-            <TouchableOpacity
-              key={s.key}
-              style={[styles.sortBtn, sortBy === s.key && styles.sortBtnActive]}
-              onPress={() => setSortBy(s.key)}
-            >
-              <MaterialIcons name={s.icon} size={12} color={sortBy === s.key ? COLORS.primary : 'rgba(255,255,255,0.4)'} />
-              <Text style={[styles.sortBtnText, sortBy === s.key && { color: COLORS.primary }]}>{s.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.results} showsVerticalScrollIndicator={false}>
-        {filtered.length === 0 ? (
-          <View style={styles.empty}>
-            <MaterialIcons name="search-off" size={32} color="rgba(255,255,255,0.3)" />
-            <Text style={styles.emptyTitle}>No petitions found</Text>
-            <Text style={styles.emptySub}>Try different keywords or remove filters.</Text>
-          </View>
-        ) : (
-          filtered.map((p) => (
-            <PetitionListItem
-              key={p.id}
-              petition={p}
-              meta={`${p.organization} - ${p.location}`}
-              onPress={() => navigation.navigate('PetitionDetail', { petitionId: p.id })}
-              onReport={(petition) => setPendingReport(petition)}
+          <View style={s.search}>
+            <Icon name="search" size={17} color="rgba(255,255,255,.4)" />
+            <TextInput
+              style={s.searchInput}
+              placeholder="Search petitions, tags, organizations"
+              placeholderTextColor="rgba(255,255,255,.3)"
+              value={query}
+              onChangeText={setQuery}
             />
-          ))
-        )}
-      </ScrollView>
+          </View>
+        </View>
 
-      <ReportModal
-        visible={Boolean(pendingReport)}
-        petition={pendingReport}
-        onClose={() => setPendingReport(null)}
-        onSubmit={reportPetition}
-      />
-    </SafeAreaView>
+        {/* Category rail. A horizontal scroller with auto height collapses its
+            own children, so the rail is given the chip height outright. */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s.chipScroll}
+          contentContainerStyle={s.chipRow}
+        >
+          {chips.map((c) => {
+            const active = filterCat === c.key;
+            const col = c.key ? CATEGORY_STYLE[c.key].glow : COLORS.primary;
+            return (
+              <Press
+                key={c.label}
+                style={[
+                  s.chip,
+                  {
+                    borderColor: active ? `${col}55` : 'rgba(255,255,255,.08)',
+                    backgroundColor: active ? `${col}1f` : 'rgba(255,255,255,.03)',
+                  },
+                ]}
+                onPress={() => { hSelect(); setFilterCat(active ? null : c.key); }}
+              >
+                <Icon name={c.icon} size={13} fill={active ? 1 : 0} color={active ? col : 'rgba(255,255,255,.45)'} />
+                <Text style={[s.chipText, { color: active ? col : 'rgba(255,255,255,.5)' }]}>{c.label}</Text>
+              </Press>
+            );
+          })}
+        </ScrollView>
+
+        <View style={s.sortRow}>
+          <MonoLabel size={9} spacing={1.4}>{results.length} PETITIONS</MonoLabel>
+          <View style={s.sortGroup}>
+            {SORTS.map((so) => {
+              const active = sort === so.key;
+              return (
+                <Press
+                  key={so.key}
+                  style={[s.sortBtn, active && s.sortBtnActive]}
+                  onPress={() => { hSelect(); setSort(so.key); }}
+                  scale={0.94}
+                >
+                  <Text style={[s.sortText, { color: active ? COLORS.primary : 'rgba(255,255,255,.42)' }]}>
+                    {so.label}
+                  </Text>
+                </Press>
+              );
+            })}
+          </View>
+        </View>
+
+        <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+          {showRail && closingSoon.length ? (
+            <View style={s.railWrap}>
+              <View style={s.railHead}>
+                <Icon name="hourglass_bottom" size={13} fill={1} color={COLORS.orange} />
+                <MonoLabel size={9} spacing={1.9} color={COLORS.orange}>CLOSING SOON</MonoLabel>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.railRow}>
+                {closingSoon.map((p) => {
+                  const cat = CATEGORY_STYLE[p.category] || CATEGORY_STYLE.Climate;
+                  return (
+                    <Press key={p.id} style={s.railCard} onPress={() => open(p.id)} scale={0.97}>
+                      <Image source={{ uri: p.image }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                      <LinearGradient
+                        colors={[`${cat.from}cc`, `${cat.to}33`]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                      />
+                      <LinearGradient
+                        colors={['transparent', 'rgba(6,9,17,.85)', COLORS.surfaceDeep]}
+                        locations={[0.2, 0.72, 1]}
+                        style={StyleSheet.absoluteFill}
+                      />
+                      <View style={s.railBadge}>
+                        <MonoLabel size={9} spacing={0.6} weight="bold" color="#fff">
+                          {p.daysLeft === 0 ? 'LAST DAY' : `${p.daysLeft}D LEFT`}
+                        </MonoLabel>
+                      </View>
+                      <View style={s.railBody}>
+                        <Icon name={cat.icon} size={17} fill={1} color={cat.glow} />
+                        <Text style={s.railTitle} numberOfLines={2}>{p.title}</Text>
+                        <MonoLabel size={9} spacing={0} color="rgba(255,255,255,.55)" style={{ marginTop: 4 }}>
+                          {fmt(p.signed)} SIGNATURES
+                        </MonoLabel>
+                      </View>
+                    </Press>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          ) : null}
+
+          <View style={s.list}>
+            {results.map((p) => (
+              <PetitionListItem key={p.id} petition={p} onPress={() => open(p.id)} />
+            ))}
+
+            {results.length === 0 ? (
+              <View style={s.empty}>
+                <Icon name="search_off" size={32} color="rgba(255,255,255,.28)" />
+                <Display size={24} lineHeight={24}>Nothing matches</Display>
+                <Text style={s.emptySub}>Try different keywords or clear the category filter.</Text>
+              </View>
+            ) : null}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
-  titleBlock: { paddingHorizontal: 24, paddingTop: 4, paddingBottom: 8 },
-  title: { color: 'white', fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
-  sub: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 2 },
-  searchWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    marginHorizontal: 20, marginBottom: 12,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 14, paddingHorizontal: 14, height: 46,
+const s = StyleSheet.create({
+  container: { flex: 1 },
+  head: { paddingHorizontal: 20, paddingBottom: 12 },
+  sub: { fontFamily: FONTS.sans, fontSize: 13, color: 'rgba(255,255,255,.45)', marginTop: 3 },
+  search: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12,
+    height: 44, paddingHorizontal: 12, borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,.045)', borderWidth: 1, borderColor: 'rgba(255,255,255,.09)',
   },
-  searchInput: { flex: 1, color: 'white', fontSize: 14 },
-  chipsRow: { paddingHorizontal: 20, gap: 8, paddingBottom: 10 },
+  searchInput: { flex: 1, minWidth: 0, color: '#fff', fontFamily: FONTS.sans, fontSize: 13, padding: 0 },
+
+  chipScroll: { flexGrow: 0, flexShrink: 0, height: 37, marginBottom: 12 },
+  chipRow: { gap: 8, paddingHorizontal: 20, alignItems: 'center' },
   chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 999, borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  chipActive: { backgroundColor: 'rgba(177,197,255,0.12)', borderColor: 'rgba(177,197,255,0.3)' },
-  chipText: { color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: '700' },
-  chipTextActive: { color: COLORS.primary },
-  sortRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, marginBottom: 12,
-  },
-  resultCount: { color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: '700' },
-  sortBtns: { flexDirection: 'row', gap: 6 },
-  sortBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8,
+    height: 35, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1,
   },
-  sortBtnActive: { backgroundColor: 'rgba(177,197,255,0.1)' },
-  sortBtnText: { color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700' },
-  results: { paddingHorizontal: 20, paddingBottom: 40, gap: 12 },
-  empty: { alignItems: 'center', paddingTop: 40, gap: 8 },
-  emptyTitle: { color: 'white', fontSize: 16, fontWeight: '800' },
-  emptySub: { color: 'rgba(255,255,255,0.5)', fontSize: 13 },
+  chipText: { fontFamily: FONTS.sansBold, fontSize: 11 },
+
+  sortRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingBottom: 12,
+  },
+  sortGroup: {
+    flexDirection: 'row', gap: 3, padding: 3, borderRadius: 11,
+    backgroundColor: 'rgba(255,255,255,.045)', borderWidth: 1, borderColor: 'rgba(255,255,255,.07)',
+  },
+  sortBtn: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 9 },
+  sortBtnActive: { backgroundColor: 'rgba(177,197,255,.14)' },
+  sortText: { fontFamily: FONTS.sansBold, fontSize: 11 },
+
+  scroll: { paddingBottom: 96 },
+  railWrap: { marginBottom: 20 },
+  railHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 8 },
+  railRow: { gap: 12, paddingHorizontal: 20 },
+  railCard: {
+    position: 'relative', width: 168, height: 186, borderRadius: 22, overflow: 'hidden',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,.09)',
+  },
+  railBadge: {
+    position: 'absolute', top: 11, right: 11,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999,
+    backgroundColor: 'rgba(249,115,22,.85)',
+  },
+  railBody: { position: 'absolute', left: 12, right: 12, bottom: 12 },
+  railTitle: { fontFamily: FONTS.sansBold, fontSize: 13, lineHeight: 16.25, color: '#fff', marginTop: 4 },
+
+  list: { paddingHorizontal: 20, gap: 12 },
+  empty: { alignItems: 'center', gap: 8, paddingVertical: 48, paddingHorizontal: 32 },
+  emptySub: { fontFamily: FONTS.sans, fontSize: 13, lineHeight: 19.5, color: 'rgba(255,255,255,.45)', textAlign: 'center' },
 });

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS } from '../theme';
+import { COLORS, FONTS } from '../theme';
 
 const INTENSITY = [
   'rgba(255,255,255,0.04)',  // 0 — empty
@@ -116,18 +116,18 @@ const styles = StyleSheet.create({
     borderRadius: 24, padding: 18,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 },
-  title: { color: 'white', fontSize: 16, fontWeight: '800' },
-  sub: { color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '600' },
+  title: { color: COLORS.white, fontFamily: FONTS.sansBold, fontSize: 15 },
+  sub: { color: 'rgba(255,255,255,0.4)', fontFamily: FONTS.mono, fontSize: 9.5, letterSpacing: 0.6 },
 
   statsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   stat: { flex: 1, alignItems: 'center' },
-  statVal: { color: COLORS.tertiary, fontSize: 20, fontWeight: '900' },
-  statLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: '800', letterSpacing: 1.5, marginTop: 2 },
+  statVal: { color: COLORS.tertiary, fontFamily: FONTS.monoBold, fontSize: 20 },
+  statLabel: { color: 'rgba(255,255,255,0.4)', fontFamily: FONTS.mono, fontSize: 8.5, letterSpacing: 1.5, marginTop: 3 },
   statDivider: { width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.06)' },
 
   gridContainer: { flexDirection: 'row', gap: 6 },
   dayLabels: { justifyContent: 'space-between', paddingVertical: 2 },
-  dayLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: '700', height: CELL_SIZE, lineHeight: CELL_SIZE },
+  dayLabel: { color: 'rgba(255,255,255,0.3)', fontFamily: FONTS.mono, fontSize: 8.5, height: CELL_SIZE, lineHeight: CELL_SIZE },
 
   grid: {
     flex: 1, flexDirection: 'row', flexWrap: 'wrap',
@@ -142,6 +142,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
     gap: 4, marginTop: 12,
   },
-  legendText: { color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: '600', marginHorizontal: 2 },
+  legendText: { color: 'rgba(255,255,255,0.3)', fontFamily: FONTS.mono, fontSize: 8.5, marginHorizontal: 2 },
   legendCell: { width: 12, height: 12, borderRadius: 3 },
 });

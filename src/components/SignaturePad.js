@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, PanResponder, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import {
+  View, PanResponder, StyleSheet, Text,
+} from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS } from '../theme';
+import { COLORS, FONTS } from '../theme';
+import Press from './Press';
 
 export default function SignaturePad({ onSave, initialPath, height = 160 }) {
   const [paths, setPaths] = useState(initialPath ? [initialPath] : []);
@@ -76,10 +79,10 @@ export default function SignaturePad({ onSave, initialPath, height = 160 }) {
         ) : null}
       </View>
       {hasSig ? (
-        <TouchableOpacity style={styles.clearBtn} onPress={clear}>
+        <Press style={styles.clearBtn} onPress={clear}>
           <MaterialIcons name="refresh" size={14} color="rgba(255,255,255,0.6)" />
           <Text style={styles.clearText}>Clear</Text>
-        </TouchableOpacity>
+        </Press>
       ) : null}
     </View>
   );
@@ -100,7 +103,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
   },
-  placeholderText: { color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: '600' },
+  placeholderText: { color: 'rgba(255,255,255,0.35)', fontFamily: FONTS.sansMedium, fontSize: 12 },
   clearBtn: {
     position: 'absolute',
     top: 10,
@@ -113,5 +116,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  clearText: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '700' },
+  clearText: { color: 'rgba(255,255,255,0.7)', fontFamily: FONTS.sansBold, fontSize: 11 },
 });

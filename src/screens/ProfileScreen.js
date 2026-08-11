@@ -1,20 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TextInput, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import Svg, { Path, Defs, Stop, Circle, LinearGradient as SvgLinearGradient } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
-import { COLORS, CATEGORY_STYLE } from '../theme';
-import { PETITION_CATEGORIES } from '../data/petitions';
-import { useApp } from '../contexts/AppContext';
-import SignaturePad from '../components/SignaturePad';
-import ContributionCalendar from '../components/ContributionCalendar';
+import { CATEGORY_STYLE, COLORS, FONTS, SECTION_LABEL } from '../theme';
 import { getLevel } from '../utils/helpers';
+import { useApp } from '../contexts/AppContext';
+import ScreenBackground from '../components/ScreenBackground';
+import { Display, MonoLabel } from '../components/Glass';
+import SignaturePad from '../components/SignaturePad';
+import Press from '../components/Press';
+import Icon from '../components/Icon';
+
+// The design's placeholder signature, shown until the user draws their own.
+const DEMO_SIGNATURE = 'M6 34 C 26 6, 40 6, 46 26 C 52 44, 64 44, 72 22 C 80 2, 92 8, 96 30 C 100 44, 112 40, 124 20 C 136 2, 150 10, 156 30 C 160 44, 176 42, 192 24 C 204 10, 224 12, 232 28 C 240 42, 262 38, 294 16';
 
 export default function ProfileScreen({ navigation }) {
-  const { user, signedIds, contributions, logout, updateUser } = useApp();
+  const { user, signedIds, createdPetitions, petitions, updateUser, logout } = useApp();
   const level = getLevel(signedIds.length);
   const [editing, setEditing] = useState(false);
+  const [redrawing, setRedrawing] = useState(false);
   const [form, setForm] = useState({
     firstName: user.firstName || '',
     lastName: user.lastName || '',
@@ -23,197 +29,307 @@ export default function ProfileScreen({ navigation }) {
     address: user.address || '',
   });
 
-  useEffect(() => {
-    setForm({
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      email: user.email || '',
-      location: user.location || '',
-      address: user.address || '',
-    });
-  }, [user]);
-
-  const upd = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const signedPetitions = signedIds.map((id) => petitions.find((p) => p.id === id)).filter(Boolean);
+  const causes = new Set(signedPetitions.map((p) => p.category)).size;
+  const initials = `${(user.firstName || 'A')[0]}${(user.lastName || 'C')[0]}`.toUpperCase();
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
+      mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.5,
     });
-    if (!result.canceled && result.assets?.[0]) {
-      updateUser({ profilePic: result.assets[0].uri });
-    }
+    if (!result.canceled && result.assets?.[0]) updateUser({ profilePic: result.assets[0].uri });
   };
 
-  const saveProfile = () => {
-    updateUser(form);
-    setEditing(false);
-  };
+  const save = () => { updateUser(form); setEditing(false); };
 
-  const toggleInterest = (cat) => {
-    const interests = user.interests?.includes(cat)
-      ? user.interests.filter((c) => c !== cat)
-      : [...(user.interests || []), cat];
+  const toggleInterest = (key) => {
+    const interests = user.interests?.includes(key)
+      ? user.interests.filter((c) => c !== key)
+      : [...(user.interests || []), key];
     updateUser({ interests });
   };
 
-  const handleLogout = () => {
+  const confirmLogout = () => {
     Alert.alert('Sign out?', 'You can sign back in anytime.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: logout },
     ]);
   };
 
-  const initials = `${(user.firstName || 'A')[0]}${(user.lastName || 'C')[0]}`;
+  const fields = [
+    { key: 'firstName', label: 'First name' },
+    { key: 'lastName', label: 'Last name' },
+    { key: 'email', label: 'Email' },
+    { key: 'location', label: 'Location' },
+    { key: 'address', label: 'Address' },
+  ];
+
+  const accountRows = [
+    {
+      key: 'sec', icon: 'lock', title: 'Security & 2FA',
+      sub: user.phoneVerified ? `Phone verified: ${user.phoneNumber}` : 'Verify a phone number to enable 2FA',
+      trail: user.twoFactorEnabled ? 'On' : 'Off',
+      trailColor: user.twoFactorEnabled ? COLORS.tertiary : 'rgba(255,255,255,.4)',
+      onPress: () => navigation.navigate('Security'),
+    },
+    {
+      key: 'not', icon: 'notifications', title: 'Notifications',
+      sub: 'Milestones, badges, deadlines', trail: 'All',
+      trailColor: 'rgba(255,255,255,.4)',
+      onPress: () => navigation.navigate('Notifications'),
+    },
+    {
+      key: 'pri', icon: 'shield_person', title: 'Privacy',
+      sub: 'Signature encrypted at rest', trail: 'On', trailColor: COLORS.tertiary,
+    },
+    {
+      key: 'out', icon: 'logout', title: 'Sign out',
+      sub: 'You can sign back in anytime', trail: '', danger: true, onPress: confirmLogout,
+    },
+  ];
 
   return (
-    <SafeAreaView style={s.container} edges={['top']}>
-      <View style={s.header}>
-        <Text style={s.title}>Profile</Text>
-        <TouchableOpacity onPress={() => (editing ? saveProfile() : setEditing(true))}>
-          <Text style={s.editBtn}>{editing ? 'Save' : 'Edit'}</Text>
-        </TouchableOpacity>
-      </View>
+    <ScreenBackground>
+      <SafeAreaView style={s.container} edges={['top']}>
+        <View style={s.navRow}>
+          <Press style={s.backBtn} onPress={() => navigation.goBack()} scale={0.9}>
+            <Icon name="arrow_back" size={17} color="#fff" />
+          </Press>
+          <Display size={24} lineHeight={24}>Profile</Display>
+          <Press onPress={() => (editing ? save() : setEditing(true))} style={s.editBtn}>
+            <Text style={s.editText}>{editing ? 'Save' : 'Edit'}</Text>
+          </Press>
+        </View>
 
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <View style={s.avatarSection}>
-          <TouchableOpacity onPress={pickImage} activeOpacity={0.8}>
-            {user.profilePic ? (
-              <Image source={{ uri: user.profilePic }} style={s.avatar} />
-            ) : (
-              <LinearGradient colors={[level.color, COLORS.primaryDeep]} style={s.avatar}>
-                <Text style={s.avatarText}>{initials}</Text>
-              </LinearGradient>
-            )}
-            <View style={s.cameraIcon}>
-              <MaterialIcons name="camera-alt" size={12} color="white" />
+        <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+          {/* Avatar + name + level */}
+          <View style={s.identity}>
+            <Press onPress={pickImage} scale={0.96}>
+              <View style={s.avatarWrap}>
+                <Svg width={88} height={88} style={StyleSheet.absoluteFill}>
+                  <Defs>
+                    <SvgLinearGradient id="pring" x1="0" y1="1" x2="1" y2="0">
+                      <Stop offset="0" stopColor="#4edea3" />
+                      <Stop offset="0.35" stopColor="#5c8cfb" />
+                      <Stop offset="0.7" stopColor="#a78bfa" />
+                      <Stop offset="1" stopColor="#4edea3" />
+                    </SvgLinearGradient>
+                  </Defs>
+                  <Circle cx={44} cy={44} r={42.75} stroke="url(#pring)" strokeWidth={2.5} fill="none" />
+                </Svg>
+                <View style={s.avatarInner}>
+                  {user.profilePic ? (
+                    <Image source={{ uri: user.profilePic }} style={StyleSheet.absoluteFill} />
+                  ) : (
+                    <Text style={s.avatarText}>{initials}</Text>
+                  )}
+                </View>
+                <View style={s.camera}>
+                  <Icon name="photo_camera" size={13} color="rgba(255,255,255,.7)" />
+                </View>
+              </View>
+            </Press>
+
+            <Display size={32} lineHeight={32}>{user.firstName} {user.lastName}</Display>
+
+            <View style={[s.levelPill, { backgroundColor: `${level.color}1c`, borderColor: `${level.color}44` }]}>
+              <Icon name="military_tech" size={13} fill={1} color={level.color} />
+              <MonoLabel size={9} spacing={1.8} weight="bold" color={level.color}>
+                {level.name.toUpperCase()} · LV {level.level}
+              </MonoLabel>
             </View>
-          </TouchableOpacity>
-          <Text style={s.name}>{user.firstName} {user.lastName}</Text>
-          <View style={[s.levelBadge, { backgroundColor: level.color + '15', borderColor: level.color + '40' }]}>
-            <MaterialCommunityIcons name="medal" size={12} color={level.color} />
-            <Text style={[s.levelText, { color: level.color }]}>{level.name.toUpperCase()} - LV {level.level}</Text>
           </View>
-        </View>
 
-        <Text style={s.sectionLabel}>PERSONAL INFORMATION</Text>
-        <View style={s.fieldCard}>
-          <FieldRow label="First Name" value={form.firstName} onChange={(v) => upd('firstName', v)} editable={editing} />
-          <FieldRow label="Last Name" value={form.lastName} onChange={(v) => upd('lastName', v)} editable={editing} />
-          <FieldRow label="Email" value={form.email} onChange={(v) => upd('email', v)} editable={editing} keyboardType="email-address" />
-          <FieldRow label="Location" value={form.location} onChange={(v) => upd('location', v)} editable={editing} />
-          <FieldRow label="Address" value={form.address} onChange={(v) => upd('address', v)} editable={editing} last />
-        </View>
+          {/* Stat tiles */}
+          <View style={s.tiles}>
+            {[
+              { key: 'a', value: String(signedIds.length), label: 'SIGNED', color: COLORS.tertiary },
+              { key: 'b', value: String(createdPetitions.length), label: 'CREATED', color: COLORS.primary },
+              { key: 'c', value: String(causes), label: 'CAUSES', color: COLORS.amber },
+            ].map((t) => (
+              <View key={t.key} style={s.tile}>
+                <Text style={[s.tileValue, { color: t.color }]}>{t.value}</Text>
+                <MonoLabel size={9} spacing={1.4}>{t.label}</MonoLabel>
+              </View>
+            ))}
+          </View>
 
-        <Text style={s.sectionLabel}>INTERESTS</Text>
-        <View style={s.interestsWrap}>
-          {PETITION_CATEGORIES.map((cat) => {
-            const active = user.interests?.includes(cat.key);
-            const style = CATEGORY_STYLE[cat.key] || CATEGORY_STYLE.Climate;
-            return (
-              <TouchableOpacity
-                key={cat.key}
-                style={[
-                  s.interestChip,
-                  active && { backgroundColor: `${style.glow}18`, borderColor: `${style.glow}40` },
-                ]}
-                onPress={() => toggleInterest(cat.key)}
+          <Text style={s.sectionLabel}>PERSONAL INFORMATION</Text>
+          <View style={s.fieldCard}>
+            {fields.map((f) => (
+              <View key={f.key} style={s.fieldRow}>
+                <Text style={s.fieldLabel}>{f.label}</Text>
+                {editing ? (
+                  <TextInput
+                    style={s.fieldInput}
+                    value={form[f.key]}
+                    onChangeText={(v) => setForm((c) => ({ ...c, [f.key]: v }))}
+                    keyboardType={f.key === 'email' ? 'email-address' : 'default'}
+                  />
+                ) : (
+                  <Text style={s.fieldValue} numberOfLines={1}>{user[f.key] || '—'}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+
+          <Text style={s.sectionLabel}>INTERESTS</Text>
+          <View style={s.chipWrap}>
+            {Object.keys(CATEGORY_STYLE).map((key) => {
+              const active = user.interests?.includes(key);
+              const col = CATEGORY_STYLE[key].glow;
+              return (
+                <Press
+                  key={key}
+                  style={[
+                    s.chip,
+                    {
+                      borderColor: active ? `${col}55` : 'rgba(255,255,255,.08)',
+                      backgroundColor: active ? `${col}1c` : 'rgba(255,255,255,.03)',
+                    },
+                  ]}
+                  onPress={() => toggleInterest(key)}
+                >
+                  <Icon name={CATEGORY_STYLE[key].icon} size={13} fill={active ? 1 : 0} color={active ? col : 'rgba(255,255,255,.42)'} />
+                  <Text style={[s.chipText, { color: active ? col : 'rgba(255,255,255,.5)' }]}>{key}</Text>
+                </Press>
+              );
+            })}
+          </View>
+
+          <Text style={s.sectionLabel}>YOUR SIGNATURE</Text>
+          <View style={s.sigCard}>
+            {redrawing ? (
+              <SignaturePad
+                initialPath={user.signature}
+                height={110}
+                onSave={(signature) => updateUser({ signature })}
+              />
+            ) : (
+              <Svg viewBox="0 0 300 46" style={s.sigSvg}>
+                <Path
+                  d={user.signature || DEMO_SIGNATURE}
+                  fill="none"
+                  stroke={COLORS.onSurface}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                />
+              </Svg>
+            )}
+            <View style={s.sigFooter}>
+              <MonoLabel size={9} spacing={1.4} color="rgba(255,255,255,.36)">
+                SAVED · USED ON EVERY SIGN
+              </MonoLabel>
+              <Press onPress={() => setRedrawing((v) => !v)}>
+                <Text style={s.redraw}>{redrawing ? 'Done' : 'Redraw'}</Text>
+              </Press>
+            </View>
+          </View>
+
+          <Text style={s.sectionLabel}>ACCOUNT</Text>
+          <View style={s.accountCard}>
+            {accountRows.map((r, i) => (
+              <Press
+                key={r.key}
+                style={[s.accountRow, i > 0 && s.accountDivider]}
+                onPress={r.onPress}
+                flat
               >
-                <MaterialCommunityIcons name={style.icon} size={14} color={active ? style.glow : 'rgba(255,255,255,0.4)'} />
-                <Text style={[s.interestText, active && { color: style.glow }]}>{cat.key}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <Text style={s.sectionLabel}>SIGNATURE</Text>
-        <SignaturePad
-          initialPath={user.signature}
-          onSave={(signature) => updateUser({ signature })}
-          height={170}
-        />
-
-        <Text style={s.sectionLabel}>ACTIVITY</Text>
-        <ContributionCalendar contributions={contributions} />
-
-        <Text style={s.sectionLabel}>SETTINGS</Text>
-        <SettingBtn icon="security" label="Security & Privacy" onPress={() => navigation.navigate('Security')} />
-        <SettingBtn icon="notifications-none" label="Notification Preferences" />
-        <SettingBtn icon="help-outline" label="Help & Feedback" />
-        <SettingBtn icon="logout" label="Sign Out" danger onPress={handleLogout} />
-      </ScrollView>
-    </SafeAreaView>
+                <Icon name={r.icon} size={17} color={r.danger ? COLORS.error : 'rgba(255,255,255,.55)'} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[s.accountTitle, r.danger && { color: COLORS.error }]}>{r.title}</Text>
+                  <Text style={s.accountSub}>{r.sub}</Text>
+                </View>
+                {r.trail ? (
+                  <MonoLabel size={11} spacing={0} color={r.trailColor}>{r.trail}</MonoLabel>
+                ) : null}
+              </Press>
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
-const FieldRow = ({ label, value, onChange, editable, keyboardType, last }) => (
-  <View style={[fieldS.row, !last && fieldS.border]}>
-    <Text style={fieldS.label}>{label}</Text>
-    {editable ? (
-      <TextInput style={fieldS.input} value={value} onChangeText={onChange} keyboardType={keyboardType} />
-    ) : (
-      <Text style={fieldS.value} numberOfLines={1}>{value || '-'}</Text>
-    )}
-  </View>
-);
-
-const SettingBtn = ({ icon, label, danger, onPress }) => (
-  <TouchableOpacity style={s.settingRow} onPress={onPress} activeOpacity={0.7}>
-    <MaterialIcons name={icon} size={18} color={danger ? COLORS.error : 'rgba(255,255,255,0.6)'} />
-    <Text style={[s.settingLabel, danger && { color: COLORS.error }]}>{label}</Text>
-    <MaterialIcons name="chevron-right" size={18} color="rgba(255,255,255,0.3)" />
-  </TouchableOpacity>
-);
-
-const fieldS = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 4 },
-  border: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
-  label: { color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '600', width: 90 },
-  value: { color: 'white', fontSize: 14, flex: 1, textAlign: 'right' },
-  input: { color: 'white', fontSize: 14, flex: 1, textAlign: 'right', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
-});
-
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 10 },
-  scroll: { padding: 20, paddingBottom: 40 },
-  title: { color: 'white', fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
-  editBtn: { color: COLORS.primary, fontSize: 14, fontWeight: '700' },
-  avatarSection: { alignItems: 'center', marginBottom: 20 },
-  avatar: { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center', marginBottom: 12, overflow: 'hidden' },
-  avatarText: { color: 'white', fontSize: 32, fontWeight: '900' },
-  cameraIcon: {
-    position: 'absolute', bottom: 12, right: -2,
+  container: { flex: 1 },
+  navRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
+  backBtn: {
+    width: 38, height: 38, borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,.09)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  editBtn: { marginLeft: 'auto' },
+  editText: { fontFamily: FONTS.sansBold, fontSize: 13, color: COLORS.primary },
+
+  scroll: { paddingHorizontal: 20, paddingBottom: 40 },
+  identity: { alignItems: 'center', gap: 8, paddingTop: 8, paddingBottom: 20 },
+  avatarWrap: { width: 88, height: 88 },
+  avatarInner: {
+    position: 'absolute', top: 2.5, left: 2.5, right: 2.5, bottom: 2.5,
+    borderRadius: 44, backgroundColor: COLORS.tileTop, overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarText: { fontFamily: FONTS.serif, fontSize: 32, color: '#fff' },
+  camera: {
+    position: 'absolute', right: 0, bottom: 2,
     width: 26, height: 26, borderRadius: 13,
-    backgroundColor: COLORS.primaryContainer, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: COLORS.surface,
+    backgroundColor: '#1b1f2b', borderWidth: 2, borderColor: COLORS.surface,
+    alignItems: 'center', justifyContent: 'center',
   },
-  name: { color: 'white', fontSize: 20, fontWeight: '900' },
-  levelBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, marginTop: 8,
+  levelPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1,
   },
-  levelText: { fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
-  sectionLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '800', letterSpacing: 2, marginTop: 24, marginBottom: 10 },
-  fieldCard: {
-    backgroundColor: COLORS.surfaceContainer, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 18, paddingHorizontal: 14,
+
+  tiles: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  tile: {
+    flex: 1, padding: 12, borderRadius: 18, alignItems: 'center', gap: 3,
+    backgroundColor: 'rgba(255,255,255,.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,.07)',
   },
-  interestsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  interestChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+  tileValue: { fontFamily: FONTS.monoBold, fontSize: 24 },
+
+  sectionLabel: SECTION_LABEL,
+
+  fieldCard: { borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.07)' },
+  fieldRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,.033)',
+    borderBottomWidth: 1, borderBottomColor: 'rgba(10,14,25,.6)',
   },
-  interestText: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.4)' },
-  settingRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    paddingVertical: 14, paddingHorizontal: 16,
-    backgroundColor: COLORS.surfaceContainer,
-    borderRadius: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+  fieldLabel: { fontFamily: FONTS.sans, fontSize: 13, color: 'rgba(255,255,255,.45)' },
+  fieldValue: { flex: 1, fontFamily: FONTS.sansBold, fontSize: 13, color: '#fff', textAlign: 'right' },
+  fieldInput: {
+    flex: 1, fontFamily: FONTS.sansBold, fontSize: 13, color: '#fff', textAlign: 'right',
+    backgroundColor: 'rgba(255,255,255,.05)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
   },
-  settingLabel: { flex: 1, color: 'white', fontSize: 14, fontWeight: '500' },
+
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1,
+  },
+  chipText: { fontFamily: FONTS.sansBold, fontSize: 13 },
+
+  sigCard: {
+    borderRadius: 20, padding: 16,
+    backgroundColor: 'rgba(255,255,255,.035)', borderWidth: 1, borderColor: 'rgba(255,255,255,.07)',
+  },
+  sigSvg: { width: '100%', height: 44 },
+  sigFooter: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.07)',
+  },
+  redraw: { fontFamily: FONTS.sansBold, fontSize: 11, color: COLORS.primary },
+
+  accountCard: { borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.07)' },
+  accountRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16,
+    backgroundColor: 'rgba(255,255,255,.033)',
+  },
+  accountDivider: { borderTopWidth: 1, borderTopColor: 'rgba(10,14,25,.6)' },
+  accountTitle: { fontFamily: FONTS.sansBold, fontSize: 13, color: '#fff' },
+  accountSub: { fontFamily: FONTS.sans, fontSize: 11, color: 'rgba(255,255,255,.4)', marginTop: 1 },
 });

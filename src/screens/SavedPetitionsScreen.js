@@ -1,80 +1,71 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS } from '../theme';
+import { FONTS } from '../theme';
 import { useApp } from '../contexts/AppContext';
+import ScreenBackground from '../components/ScreenBackground';
+import { Display } from '../components/Glass';
 import AppHeader from '../components/AppHeader';
 import PetitionListItem from '../components/PetitionListItem';
-import ReportModal from '../components/ReportModal';
+import Icon from '../components/Icon';
 
 export default function SavedPetitionsScreen({ navigation }) {
-  const { savedIds, getPetitionById, reportPetition } = useApp();
-  const [pendingReport, setPendingReport] = useState(null);
-  const items = savedIds.map(getPetitionById).filter(Boolean);
+  const { petitions, savedIds, toggleSave } = useApp();
+  const saved = savedIds.map((id) => petitions.find((p) => p.id === id)).filter(Boolean);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <AppHeader
-        onProfilePress={() => navigation.navigate('ProfileTab')}
-        onNotifPress={() => navigation.navigate('Notifications')}
-      />
+    <ScreenBackground>
+      <SafeAreaView style={s.container} edges={['top']}>
+        <AppHeader
+          onProfilePress={() => navigation.navigate('Profile')}
+          onNotifPress={() => navigation.navigate('Notifications')}
+        />
 
-      <View style={styles.titleBlock}>
-        <Text style={styles.title}>Saved</Text>
-        <Text style={styles.sub}>
-          {savedIds.length} {savedIds.length === 1 ? 'petition' : 'petitions'} saved for later
-        </Text>
-      </View>
+        <View style={s.head}>
+          <Display size={32} lineHeight={32}>Saved</Display>
+          <Text style={s.sub}>
+            {saved.length} {saved.length === 1 ? 'petition' : 'petitions'} saved for later
+          </Text>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {items.length === 0 ? (
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <MaterialIcons name="bookmark-border" size={28} color="rgba(255,255,255,0.4)" />
-            </View>
-            <Text style={styles.emptyTitle}>No saved petitions yet</Text>
-            <Text style={styles.emptySub}>
-              Bookmark from the detail view to come back to petitions later.
-            </Text>
-          </View>
-        ) : (
-          items.map((p) => (
+        <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+          {saved.map((p) => (
             <PetitionListItem
               key={p.id}
               petition={p}
-              meta={`${p.organization} - ${p.daysLeft}d left`}
+              variant="saved"
               onPress={() => navigation.navigate('PetitionDetail', { petitionId: p.id })}
-              onReport={(petition) => setPendingReport(petition)}
+              onUnsave={() => toggleSave(p.id)}
             />
-          ))
-        )}
-      </ScrollView>
+          ))}
 
-      <ReportModal
-        visible={Boolean(pendingReport)}
-        petition={pendingReport}
-        onClose={() => setPendingReport(null)}
-        onSubmit={reportPetition}
-      />
-    </SafeAreaView>
+          {saved.length === 0 ? (
+            <View style={s.empty}>
+              <View style={s.emptyIcon}>
+                <Icon name="bookmark" size={24} color="rgba(255,255,255,.4)" />
+              </View>
+              <Display size={24} lineHeight={24}>Nothing saved yet</Display>
+              <Text style={s.emptySub}>
+                Bookmark a petition from its detail page to come back to it later.
+              </Text>
+            </View>
+          ) : null}
+        </ScrollView>
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
-  titleBlock: { paddingHorizontal: 24, paddingTop: 4, paddingBottom: 8 },
-  title: { color: 'white', fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
-  sub: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 2 },
-  list: { padding: 20, paddingBottom: 40, gap: 12 },
-  empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24 },
+const s = StyleSheet.create({
+  container: { flex: 1 },
+  head: { paddingHorizontal: 20, paddingBottom: 12 },
+  sub: { fontFamily: FONTS.sans, fontSize: 13, color: 'rgba(255,255,255,.45)', marginTop: 3 },
+  scroll: { paddingHorizontal: 20, paddingBottom: 96, gap: 12 },
+  empty: { alignItems: 'center', gap: 8, paddingVertical: 64, paddingHorizontal: 32 },
   emptyIcon: {
-    width: 64, height: 64, borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    width: 62, height: 62, borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,.09)',
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16,
   },
-  emptyTitle: { color: 'white', fontSize: 18, fontWeight: '900', marginBottom: 6 },
-  emptySub: { color: 'rgba(255,255,255,0.5)', fontSize: 13, textAlign: 'center', lineHeight: 19 },
+  emptySub: { fontFamily: FONTS.sans, fontSize: 13, lineHeight: 19.5, color: 'rgba(255,255,255,.45)', textAlign: 'center' },
 });

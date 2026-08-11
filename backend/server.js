@@ -6,6 +6,13 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
+const { getRegulationsPetitions, submitRegulationsComment } = require('./sources/regulationsGov');
+const {
+  ACTION_NETWORK_ENABLED,
+  getActionNetworkPetitions,
+  createActionNetworkPetition,
+  signActionNetworkPetition,
+} = require('./sources/actionNetwork');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -168,6 +175,8 @@ const petitionToRow = (petition) => ({
 
 const rowToPetition = (row) => ({
   id: row.id,
+  actionNetworkId: row.action_network_id || null,
+  externalUrl: row.external_url || null,
   title: row.title,
   summary: row.summary,
   why: row.description,
@@ -333,7 +342,23 @@ app.get('/api/petitions', async (req, res, next) => {
       }
     }
 
-    res.json({ petitions: rows.map(rowToPetition) });
+    // External sources: real federal comment periods + Action Network petitions.
+    const [regulations, actionNetwork] = await Promise.all([
+      getRegulationsPetitions(),
+      getActionNetworkPetitions(),
+    ]);
+    let external = [...actionNetwork, ...regulations];
+    if (category) external = external.filter((petition) => petition.category === category);
+    if (search) {
+      const q = String(search).toLowerCase();
+      external = external.filter((petition) => (
+        petition.title.toLowerCase().includes(q) ||
+        petition.summary.toLowerCase().includes(q) ||
+        petition.organization.toLowerCase().includes(q)
+      ));
+    }
+
+    res.json({ petitions: [...rows.map(rowToPetition), ...external] });
   } catch (error) {
     next(error);
   }
@@ -341,6 +366,16 @@ app.get('/api/petitions', async (req, res, next) => {
 
 app.get('/api/petitions/:id', async (req, res, next) => {
   try {
+    if (req.params.id.startsWith('reg_') || req.params.id.startsWith('an_')) {
+      const [regulations, actionNetwork] = await Promise.all([
+        getRegulationsPetitions(),
+        getActionNetworkPetitions(),
+      ]);
+      const external = [...actionNetwork, ...regulations].find((item) => item.id === req.params.id);
+      if (!external) return res.status(404).json({ error: 'Petition not found' });
+      return res.json({ petition: external });
+    }
+
     if (!supabase) {
       const petition = memory.petitions.find((item) => item.id === req.params.id);
       if (!petition) return res.status(404).json({ error: 'Petition not found' });
@@ -355,13 +390,60 @@ app.get('/api/petitions/:id', async (req, res, next) => {
   }
 });
 
+// Public comment wall: comments left while signing, with signer first names.
+app.get('/api/petitions/:id/comments', async (req, res, next) => {
+  try {
+    if (!supabase) {
+      const comments = memory.signatures
+        .filter((item) => item.petitionId === req.params.id && item.comment)
+        .slice(-30)
+        .reverse()
+        .map((item) => {
+          const signer = memory.users.find((u) => u.firebase_uid === item.firebaseUid);
+          const name = signer
+            ? `${signer.first_name || 'Supporter'} ${(signer.last_name || '').charAt(0)}`.trim()
+            : 'Supporter';
+          return { name, comment: item.comment, createdAt: item.created_at };
+        });
+      return res.json({ comments });
+    }
+
+    const { data, error } = await supabase
+      .from('signatures')
+      .select('comment, created_at, users(first_name, last_name)')
+      .eq('petition_id', req.params.id)
+      .not('comment', 'is', null)
+      .neq('comment', '')
+      .order('created_at', { ascending: false })
+      .limit(30);
+    if (error) throw error;
+
+    return res.json({
+      comments: (data || []).map((row) => ({
+        name: `${row.users?.first_name || 'Supporter'} ${(row.users?.last_name || '').charAt(0)}`.trim(),
+        comment: row.comment,
+        createdAt: row.created_at,
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.post('/api/petitions', async (req, res, next) => {
   try {
     const petition = req.body.petition || req.body;
     const missing = required(petition, ['title', 'summary', 'ask', 'category', 'location', 'recipient']);
     if (missing.length) return res.status(400).json({ error: `Missing fields: ${missing.join(', ')}` });
 
+    // Mirror to Action Network so the petition exists as a real, signable petition.
+    const mirrored = await createActionNetworkPetition(petition);
     const row = petitionToRow(petition);
+    if (mirrored) {
+      row.action_network_id = mirrored.anId;
+      row.external_url = mirrored.browserUrl;
+    }
+
     if (!supabase) {
       const saved = { id: petition.id || `p_${Date.now()}`, ...row };
       memory.petitions.unshift(saved);
@@ -370,14 +452,16 @@ app.post('/api/petitions', async (req, res, next) => {
     }
 
     const user = await ensureUser({ firebaseUid: req.body.firebaseUid, ...(req.body.user || {}) });
+    // The Supabase schema has no Action Network columns; keep those local-only.
+    const { action_network_id, external_url, ...supabaseRow } = row;
     const { data, error } = await supabase
       .from('petitions')
-      .insert({ ...row, created_by: user?.id || null })
+      .insert({ ...supabaseRow, created_by: user?.id || null })
       .select()
       .single();
     if (error) throw error;
 
-    return res.status(201).json({ petition: rowToPetition(data) });
+    return res.status(201).json({ petition: { ...rowToPetition(data), actionNetworkId: action_network_id || null, externalUrl: external_url || null } });
   } catch (error) {
     next(error);
   }
@@ -485,12 +569,49 @@ app.post('/api/ai/petition-draft', async (req, res, next) => {
   }
 });
 
+// Submit an official public comment on a federal proposed rule.
+app.post('/api/regulations/comment', async (req, res, next) => {
+  try {
+    const { petitionId, comment, firstName, lastName, email, city } = req.body;
+    if (!petitionId?.startsWith('reg_')) {
+      return res.status(400).json({ error: 'petitionId must be a regulations.gov item (reg_...)' });
+    }
+    if (!comment?.trim()) return res.status(400).json({ error: 'A comment is required.' });
+
+    const documentId = petitionId.slice(4);
+    const result = await submitRegulationsComment({ documentId, comment, firstName, lastName, email, city });
+    return res.status(201).json({ submitted: true, trackingNumber: result.trackingNumber });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.post('/api/sign', async (req, res, next) => {
   try {
     const { firebaseUid, petitionId, comment, signer = {} } = req.body;
     if (!firebaseUid || !petitionId) return res.status(400).json({ error: 'firebaseUid and petitionId are required' });
 
     const user = await ensureUser({ firebaseUid, ...signer });
+
+    // Real signatures: petitions hosted on (or mirrored to) Action Network.
+    let actionNetworkId = null;
+    if (petitionId.startsWith('an_')) {
+      actionNetworkId = petitionId.slice(3);
+    } else if (!supabase) {
+      actionNetworkId = memory.petitions.find((item) => item.id === petitionId)?.action_network_id || null;
+    }
+    if (actionNetworkId && ACTION_NETWORK_ENABLED) {
+      try {
+        await signActionNetworkPetition(actionNetworkId, {
+          name: signer.name,
+          email: signer.email,
+          comment,
+          location: signer.location,
+        });
+      } catch (anError) {
+        console.warn('Action Network signature failed:', anError.message);
+      }
+    }
 
     if (!supabase) {
       if (!memory.signatures.some((item) => item.firebaseUid === firebaseUid && item.petitionId === petitionId)) {
@@ -671,7 +792,10 @@ app.post('/api/save', async (req, res, next) => {
     }
 
     const request = saved
-      ? supabase.from('saved_petitions').upsert({ user_id: user.id, petition_id: petitionId })
+      ? supabase.from('saved_petitions').upsert(
+          { user_id: user.id, petition_id: petitionId },
+          { onConflict: 'user_id,petition_id' },
+        )
       : supabase.from('saved_petitions').delete().match({ user_id: user.id, petition_id: petitionId });
     const { error } = await request;
     if (error) throw error;

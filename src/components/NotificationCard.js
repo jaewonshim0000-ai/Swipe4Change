@@ -1,7 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View, Text, StyleSheet,
+} from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS, CATEGORY_STYLE } from '../theme';
+import { COLORS, CATEGORY_STYLE, FONTS } from '../theme';
+import Press from './Press';
 
 const TYPE_META = {
   goal_reached:          { icon: 'flag-checkered',  color: '#4edea3', label: 'GOAL REACHED' },
@@ -17,10 +20,9 @@ export default function NotificationCard({ notification, onPress }) {
   const timeAgo = getTimeAgo(notification.createdAt);
 
   return (
-    <TouchableOpacity
+    <Press
       style={[styles.card, isUnread && styles.unread]}
       onPress={() => onPress(notification)}
-      activeOpacity={0.8}
     >
       {/* Verified badge */}
       {notification.verified && (
@@ -56,7 +58,7 @@ export default function NotificationCard({ notification, onPress }) {
           {notification.situation && <DetailRow icon="description" label="Situation" value={notification.situation} />}
         </View>
       )}
-    </TouchableOpacity>
+    </Press>
   );
 }
 
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
     alignSelf: 'flex-start',
   },
-  verifiedText: { color: COLORS.tertiary, fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
+  verifiedText: { color: COLORS.tertiary, fontFamily: FONTS.mono, fontSize: 8.5, letterSpacing: 1.5 },
 
   header: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   iconCircle: {
@@ -107,9 +109,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
-  typeLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
-  time: { color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: '600' },
-  title: { color: 'white', fontSize: 16, fontWeight: '800' },
+  typeLabel: { fontFamily: FONTS.mono, fontSize: 8.5, letterSpacing: 1.5 },
+  time: { color: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: FONTS.sansSemi, },
+  title: { color: COLORS.white, fontFamily: FONTS.sansBold, fontSize: 15 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary, marginTop: 6 },
 
   body: { color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 19 },
@@ -120,6 +122,6 @@ const styles = StyleSheet.create({
     borderRadius: 14, padding: 12, gap: 10,
   },
   detailRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  detailLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: '800', letterSpacing: 1.5, marginBottom: 2 },
+  detailLabel: { color: 'rgba(255,255,255,0.4)', fontFamily: FONTS.mono, fontSize: 8.5, letterSpacing: 1.5, marginBottom: 3 },
   detailValue: { color: 'rgba(255,255,255,0.85)', fontSize: 13, lineHeight: 17 },
 });

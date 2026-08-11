@@ -16,12 +16,16 @@ import {
 } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SEED_PETITIONS, MOCK_USER, SEED_NOTIFICATIONS, BADGES } from '../data/petitions';
+import { LEVELS } from '../theme';
+import { computeStreaks } from '../utils/helpers';
 import { auth, FIREBASE_ENABLED } from '../config/firebase';
 import { supabase, SUPABASE_ENABLED } from '../config/supabase';
 import { apiRequest, API_BASE_URL } from '../config/api';
+import { pushLocal, ensureDailyReminder } from '../utils/notifications';
 
 const AppContext = createContext(null);
-const DAILY_GOAL = 10;
+// The design's daily challenge is five signatures.
+const DAILY_GOAL = 5;
 const PROFILE_STORAGE_PREFIX = 'swipe4change:profile:';
 const LAST_PROFILE_STORAGE_KEY = 'swipe4change:lastProfile';
 const ACCOUNT_STORAGE_PREFIX = 'swipe4change:account:';
@@ -47,6 +51,20 @@ const splitName = (name = '') => {
 };
 
 const demoUserId = (email = '') => `demo:${String(email || MOCK_USER.email).trim().toLowerCase()}`;
+
+// A fresh account should not inherit the mock persona's identity fields.
+const freshProfileFromEmail = (email = '') => {
+  const handle = String(email).split('@')[0] || 'New User';
+  const first = handle.replace(/[._-]+/g, ' ').trim().split(/\s+/)[0] || 'New';
+  return {
+    firstName: first.charAt(0).toUpperCase() + first.slice(1),
+    lastName: '',
+    location: '',
+    address: '',
+    profilePic: null,
+    signature: null,
+  };
+};
 
 const firebaseUserToProfile = (fbUser) => {
   const name = splitName(fbUser.displayName || '');
@@ -219,6 +237,8 @@ export function AppProvider({ children }) {
   const [createdPetitions, setCreatedPetitions] = useState([]);
 
   const [contributions, setContributions] = useState(createInitialContributions);
+  const [celebration, setCelebration] = useState(null);
+  const clearCelebration = useCallback(() => setCelebration(null), []);
 
   const resetAccountState = useCallback((profile = MOCK_USER) => {
     setUser(profile);
@@ -261,6 +281,7 @@ export function AppProvider({ children }) {
       .then((raw) => {
         if (raw) {
           restoreAccount(JSON.parse(raw));
+          setIsAuthenticated(true);
           return;
         }
         return AsyncStorage.getItem(LAST_PROFILE_STORAGE_KEY).then((profileRaw) => {
@@ -313,7 +334,7 @@ export function AppProvider({ children }) {
         const stored = account?.user || await loadStoredProfile(base.id) || await loadStoredProfile(base.email);
         const remote = await fetchRemoteProfile(base.id);
         const remoteAccount = await fetchRemoteAccountData(base.id);
-        const next = { ...MOCK_USER, ...base, ...(stored || {}), ...(remote || {}), id: base.id, email: base.email };
+        const next = { ...MOCK_USER, ...freshProfileFromEmail(base.email), ...base, ...(stored || {}), ...(remote || {}), id: base.id, email: base.email };
         resetAccountState(next);
         if (account) restoreAccount(account, next);
         setUser(next);
@@ -341,7 +362,12 @@ export function AppProvider({ children }) {
       apiRequest('/api/petitions')
         .then((result) => {
           if (result?.petitions?.length) {
-            setPetitions(result.petitions);
+            // Merge with seeds so external sources (Regulations.gov, Action
+            // Network) appear alongside the built-in petitions.
+            setPetitions((current) => {
+              const incomingIds = new Set(result.petitions.map((petition) => petition.id));
+              return [...result.petitions, ...current.filter((petition) => !incomingIds.has(petition.id))];
+            });
           }
         })
         .catch((error) => console.warn('API petition load failed:', error.message));
@@ -380,7 +406,15 @@ export function AppProvider({ children }) {
       },
       ...prev,
     ]);
+    // Mirror in-app events to the system tray on devices.
+    pushLocal(notification.title, notification.body);
   }, []);
+
+  // Ask for notification permission and set the evening streak reminder once
+  // the user is actually signed in.
+  useEffect(() => {
+    if (isAuthenticated) ensureDailyReminder();
+  }, [isAuthenticated]);
 
   const login = useCallback(async (email, password) => {
     setAuthError('');
@@ -397,6 +431,7 @@ export function AppProvider({ children }) {
     const remoteAccount = await fetchRemoteAccountData(stored?.id || accountId);
     const next = {
       ...MOCK_USER,
+      ...(stored || remote ? {} : freshProfileFromEmail(normalizedEmail)),
       id: stored?.id || accountId,
       email: normalizedEmail || remote?.email || stored?.email || MOCK_USER.email,
       ...(stored || {}),
@@ -425,7 +460,7 @@ export function AppProvider({ children }) {
     if (FIREBASE_ENABLED && auth) {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(credential.user, { displayName: `${name.firstName} ${name.lastName}` });
-      const next = { ...MOCK_USER, ...name, email, id: credential.user.uid, ...profile };
+      const next = { ...MOCK_USER, ...name, email, id: credential.user.uid, ...profile, interests: [], onboarded: false };
       resetAccountState(next);
       setUser(next);
       persistProfile(next);
@@ -438,7 +473,7 @@ export function AppProvider({ children }) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const next = { ...MOCK_USER, ...name, email: normalizedEmail, id: demoUserId(normalizedEmail), ...profile };
+    const next = { ...MOCK_USER, ...freshProfileFromEmail(normalizedEmail), ...name, email: normalizedEmail, id: demoUserId(normalizedEmail), ...profile, interests: [], onboarded: false };
     resetAccountState(next);
     setUser(next);
     persistProfile(next);
@@ -453,6 +488,8 @@ export function AppProvider({ children }) {
     if (FIREBASE_ENABLED && auth) {
       await firebaseSignOut(auth);
     }
+    await AsyncStorage.multiRemove([LAST_ACCOUNT_STORAGE_KEY, LAST_PROFILE_STORAGE_KEY])
+      .catch((error) => console.warn('Session clear failed:', error.message));
     resetAccountState(MOCK_USER);
     setIsAuthenticated(false);
   }, [resetAccountState]);
@@ -543,7 +580,9 @@ export function AppProvider({ children }) {
   }, [petitions, user.interests]);
 
   const advanceDeck = useCallback(() => setDeckIndex((index) => index + 1), []);
-  const resetDeck = useCallback(() => setDeckIndex(0), []);
+  const rewindDeck = useCallback(() => setDeckIndex((index) => Math.max(0, index - 1)), []);
+  // "Reset feed" puts every petition back in the deck, as the design does.
+  const resetDeck = useCallback(() => { setDeckIndex(0); setSignedIds([]); }, []);
   const getPetitionById = useCallback((id) => petitions.find((petition) => petition.id === id), [petitions]);
 
   const signPetition = useCallback((petitionId, details = {}) => {
@@ -557,47 +596,65 @@ export function AppProvider({ children }) {
       item.id === petitionId ? { ...item, signed: item.signed + 1 } : item
     )));
 
-    setDailyCount((count) => {
-      const next = Math.min(DAILY_GOAL, count + 1);
-      if (next === DAILY_GOAL && count < DAILY_GOAL) {
-        addNotification({
-          type: 'daily_challenge',
-          title: 'Daily challenge complete',
-          body: `You signed ${DAILY_GOAL} petitions today.`,
-          verified: false,
-        });
-      }
-      return next;
-    });
+    const nextDaily = dailyCount + 1;
+    setDailyCount(nextDaily);
 
     const today = new Date().toISOString().slice(0, 10);
     setContributions((current) => ({ ...current, [today]: (current[today] || 0) + 1 }));
 
     const count = signedIds.length + 1;
-    BADGES.filter((badge) => badge.type === 'signs' && badge.threshold === count).forEach((badge) => {
-      addNotification({
-        type: 'badge_earned',
-        title: `Badge earned: ${badge.name}`,
-        body: badge.desc,
-        verified: false,
-      });
-    });
+    const levelBefore = LEVELS.find((l) => signedIds.length >= l.min && signedIds.length <= l.max) || LEVELS[0];
+    const levelAfter = LEVELS.find((l) => count >= l.min && count <= l.max) || LEVELS[0];
+    const streakDays = computeStreaks(contributions).current;
 
-    const levels = { 6: 'Supporter', 21: 'Advocate', 51: 'Changemaker', 101: 'Catalyst' };
-    if (levels[count]) {
+    // Exactly the design's three celebration cases, in its priority order:
+    // first signature, then a level up, then completing the daily five.
+    if (count === 1) {
+      setCelebration({
+        icon: 'celebration',
+        kicker: 'BADGE UNLOCKED',
+        title: 'First Sign',
+        sub: 'You joined your first campaign. Seven more badges to go.',
+        color: '#fbbf24',
+        from: '#3a2a05',
+        to: '#d6a527',
+      });
+    } else if (levelAfter.level > levelBefore.level) {
+      setCelebration({
+        icon: 'emoji_events',
+        kicker: 'LEVEL UP',
+        title: levelAfter.name,
+        sub: `You reached level ${levelAfter.level}. Your voice carries further now.`,
+        color: levelAfter.color,
+        from: '#2a1e5f',
+        to: '#7c5cff',
+      });
+    } else if (nextDaily === DAILY_GOAL) {
+      setCelebration({
+        icon: 'local_fire_department',
+        kicker: 'DAILY GOAL',
+        title: `${DAILY_GOAL} for ${DAILY_GOAL}`,
+        sub: `Daily challenge complete. Streak extended to ${streakDays + 1} days.`,
+        color: '#fbbf24',
+        from: '#3a2410',
+        to: '#c27a2e',
+      });
+    }
+
+    if (levelAfter.level > levelBefore.level) {
       addNotification({
         type: 'level_up',
-        title: 'Level up!',
-        body: `You've reached ${levels[count]} status.`,
+        title: `You reached ${levelAfter.name}`,
+        body: `Level ${levelAfter.level} unlocked. Keep signing to reach the next tier.`,
         verified: false,
       });
     }
 
-    if (petition && nextSigned >= petition.goal) {
+    if (petition && petition.goal > 0 && nextSigned >= petition.goal) {
       addNotification({
         type: 'goal_reached',
-        title: 'Goal reached!',
-        body: `"${petition.title}" reached its signature goal.`,
+        title: `${petition.title} hit its goal`,
+        body: `${petition.goal.toLocaleString()} signatures reached. The petition now heads to its recipient.`,
         petitionId,
         recipient: petition.recipient,
         situation: petition.why,
@@ -622,7 +679,7 @@ export function AppProvider({ children }) {
     }).catch((error) => console.warn('Signature sync failed:', error.message));
 
     return true;
-  }, [addNotification, petitions, signedIds, user]);
+  }, [addNotification, contributions, dailyCount, petitions, signedIds, user]);
 
   const toggleSave = useCallback((petitionId) => {
     setSavedIds((current) => {
@@ -671,31 +728,28 @@ export function AppProvider({ children }) {
   }, [addNotification, petitions, user]);
 
   const unreadCount = useMemo(() => notifications.filter((item) => !item.read).length, [notifications]);
-  const earnedBadges = useMemo(() => {
-    const signCount = signedIds.length;
-    const createCount = createdPetitions.length;
-    const savedCount = savedIds.length;
-    const signedPetitions = signedIds.map((id) => petitions.find((petition) => petition.id === id)).filter(Boolean);
-    const catCount = new Set(signedPetitions.map((petition) => petition.category)).size;
-    const climateSigns = signedPetitions.filter((petition) => petition.category === 'Climate').length;
 
-    return BADGES.filter((badge) => {
-      switch (badge.type) {
-        case 'signs':
-          return signCount >= badge.threshold;
-        case 'created':
-          return createCount >= badge.threshold;
-        case 'saved':
-          return savedCount >= badge.threshold;
-        case 'categories':
-          return catCount >= badge.threshold;
-        case 'cat_Climate':
-          return climateSigns >= badge.threshold;
-        default:
-          return false;
-      }
-    });
-  }, [createdPetitions, petitions, savedIds, signedIds]);
+  const streak = useMemo(() => computeStreaks(contributions), [contributions]);
+
+  // Each badge decides for itself from the same tally, matching the design's
+  // BADGES table.
+  const badgeCounts = useMemo(() => {
+    const signedPetitions = signedIds
+      .map((id) => petitions.find((petition) => petition.id === id))
+      .filter(Boolean);
+    return {
+      signed: signedIds.length,
+      created: createdPetitions.length,
+      saved: savedIds.length,
+      causes: new Set(signedPetitions.map((petition) => petition.category)).size,
+      streak: streak.current,
+    };
+  }, [createdPetitions, petitions, savedIds, signedIds, streak]);
+
+  const earnedBadges = useMemo(
+    () => BADGES.filter((badge) => badge.test(badgeCounts)),
+    [badgeCounts],
+  );
 
   const value = useMemo(() => ({
     isAuthenticated,
@@ -719,6 +773,7 @@ export function AppProvider({ children }) {
     dailyCount,
     DAILY_GOAL,
     advanceDeck,
+    rewindDeck,
     signPetition,
     toggleSave,
     reportPetition,
@@ -732,9 +787,18 @@ export function AppProvider({ children }) {
     createdPetitions,
     createPetition,
     earnedBadges,
+    badgeCounts,
+    streak,
+    celebration,
+    setCelebration,
+    clearCelebration,
   }), [
+    badgeCounts,
+    streak,
     addNotification,
     advanceDeck,
+    celebration,
+    clearCelebration,
     accountHydrated,
     authError,
     authLoading,
@@ -753,6 +817,7 @@ export function AppProvider({ children }) {
     personalizedPetitions,
     petitions,
     resetDeck,
+    rewindDeck,
     reportPetition,
     savedIds,
     signPetition,
