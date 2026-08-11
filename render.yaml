@@ -2,11 +2,14 @@ services:
   - type: web
     name: swipe4change-api
     env: node
+    plan: free
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
     envVars:
+      - key: NODE_VERSION
+        value: "20"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
@@ -26,6 +29,10 @@ services:
       - key: REPORT_EMAIL_FROM
         value: Swipe4Change <onboarding@resend.dev>
       - key: RESEND_API_KEY
+        sync: false
+      - key: REGULATIONS_GOV_API_KEY
+        sync: false
+      - key: ACTION_NETWORK_API_KEY
         sync: false
       - key: CORS_ORIGIN
         value: "*"
